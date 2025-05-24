@@ -43,10 +43,9 @@ class EcommerceController extends Controller
 
         // Categorias principais
         $categories = Category::active()
-            ->withCount(['products' => function($query) {
+            ->whereHas('products', function($query) {
                 $query->availableOnline();
-            }])
-            ->having('products_count', '>', 0)
+            })
             ->limit(8)
             ->get();
 
@@ -121,10 +120,9 @@ class EcommerceController extends Controller
         $products = $query->paginate(12)->withQueryString();
         
         $categories = Category::active()
-            ->withCount(['products' => function($query) {
+            ->whereHas('products', function($query) {
                 $query->availableOnline();
-            }])
-            ->having('products_count', '>', 0)
+            })
             ->get();
 
         // Faixa de preços para o filtro
