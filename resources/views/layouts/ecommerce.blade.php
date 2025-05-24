@@ -124,10 +124,9 @@
                     
                     @php
                         $categories = \App\Models\Category::active()
-                            ->withCount(['products' => function($query) {
+                            ->whereHas('products', function($query) {
                                 $query->availableOnline();
-                            }])
-                            ->having('products_count', '>', 0)
+                            })
                             ->limit(6)
                             ->get();
                     @endphp
