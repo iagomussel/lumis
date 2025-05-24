@@ -44,6 +44,9 @@ Route::prefix('loja')->name('ecommerce.')->group(function () {
     
     Route::get('/checkout', [EcommerceController::class, 'checkout'])->name('checkout');
     
+    // Shipping routes
+    Route::post('/shipping/calculate', [EcommerceController::class, 'calculateShipping'])->name('shipping.calculate');
+    
     // Payment routes
     Route::post('/payment/intent', [EcommerceController::class, 'createPaymentIntent'])->name('payment.intent');
     Route::post('/order/create', [EcommerceController::class, 'createOrder'])->name('order.create');

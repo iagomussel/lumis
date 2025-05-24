@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\ShippingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,13 @@ use Stripe\PaymentIntent;
 
 class EcommerceController extends Controller
 {
+    protected $shippingService;
+
+    public function __construct(ShippingService $shippingService)
+    {
+        $this->shippingService = $shippingService;
+    }
+
     /**
      * Homepage do E-commerce
      */
@@ -356,6 +364,90 @@ class EcommerceController extends Controller
     }
 
     /**
+     * Calcular frete via AJAX
+     */
+    public function calculateShipping(Request $request)
+    {
+        $request->validate([
+            'cep' => 'required|string|regex:/^\d{5}-?\d{3}$/'
+        ]);
+
+        try {
+            $cart = Session::get('cart', []);
+            
+            if (empty($cart)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Carrinho vazio'
+                ], 400);
+            }
+
+            // Prepare cart items for shipping calculation
+            $cartItems = [];
+            foreach ($cart as $item) {
+                $product = Product::find($item['product_id']);
+                if ($product && $product->online_sale && $product->status === 'active') {
+                    $cartItems[] = [
+                        'product' => $product,
+                        'quantity' => $item['quantity']
+                    ];
+                }
+            }
+
+            // Check for free shipping eligibility
+            $subtotal = array_sum(array_map(function($item) {
+                return $item['product']->current_price * $item['quantity'];
+            }, $cartItems));
+
+            $freeShippingMinimum = config('shipping.free_shipping.minimum_amount', 299.00);
+            $freeShippingEnabled = config('shipping.free_shipping.enabled', true);
+
+            if ($freeShippingEnabled && $subtotal >= $freeShippingMinimum) {
+                return response()->json([
+                    'success' => true,
+                    'free_shipping' => true,
+                    'options' => [
+                        [
+                            'service_code' => 'FREE',
+                            'service_name' => 'Frete Grátis',
+                            'price' => 0,
+                            'delivery_time' => 5,
+                            'formatted_price' => 'Grátis'
+                        ]
+                    ]
+                ]);
+            }
+
+            // Calculate shipping options
+            $shippingOptions = $this->shippingService->getShippingOptions($request->cep, $cartItems);
+
+            // Format shipping options
+            $formattedOptions = array_map(function($option) {
+                return [
+                    'service_code' => $option['service_code'],
+                    'service_name' => $option['service_name'],
+                    'price' => $option['price'],
+                    'delivery_time' => $option['delivery_time'],
+                    'formatted_price' => 'R$ ' . number_format($option['price'], 2, ',', '.'),
+                    'formatted_delivery_time' => $option['delivery_time'] . ' dia' . ($option['delivery_time'] > 1 ? 's' : '') . ' útil'
+                ];
+            }, $shippingOptions);
+
+            return response()->json([
+                'success' => true,
+                'free_shipping' => false,
+                'options' => $formattedOptions
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao calcular frete: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Checkout
      */
     public function checkout()
@@ -383,7 +475,12 @@ class EcommerceController extends Controller
             }
         }
 
-        return view('ecommerce.checkout', compact('cartItems', 'total'));
+        // Check for free shipping
+        $freeShippingMinimum = config('shipping.free_shipping.minimum_amount', 299.00);
+        $freeShippingEnabled = config('shipping.free_shipping.enabled', true);
+        $qualifiesForFreeShipping = $freeShippingEnabled && $total >= $freeShippingMinimum;
+
+        return view('ecommerce.checkout', compact('cartItems', 'total', 'qualifiesForFreeShipping', 'freeShippingMinimum'));
     }
 
     /**
@@ -397,13 +494,17 @@ class EcommerceController extends Controller
             return response()->json(['error' => 'Carrinho vazio'], 400);
         }
 
-        $total = 0;
+        $subtotal = 0;
         foreach ($cart as $item) {
             $product = Product::find($item['product_id']);
             if ($product && $product->online_sale && $product->status === 'active') {
-                $total += $product->current_price * $item['quantity'];
+                $subtotal += $product->current_price * $item['quantity'];
             }
         }
+
+        // Add shipping cost if provided
+        $shippingCost = $request->input('shipping_cost', 0);
+        $total = $subtotal + $shippingCost;
 
         if ($total <= 0) {
             return response()->json(['error' => 'Total inválido'], 400);
@@ -418,6 +519,7 @@ class EcommerceController extends Controller
                 'metadata' => [
                     'customer_email' => $request->input('customer_data.email'),
                     'customer_name' => $request->input('customer_data.first_name') . ' ' . $request->input('customer_data.last_name'),
+                    'shipping_cost' => $shippingCost,
                 ]
             ]);
 
@@ -445,7 +547,7 @@ class EcommerceController extends Controller
             DB::beginTransaction();
 
             // Calculate total
-            $total = 0;
+            $subtotal = 0;
             $cartItems = [];
             
             foreach ($cart as $item) {
@@ -464,7 +566,7 @@ class EcommerceController extends Controller
                         'price' => $product->current_price,
                         'total' => $itemTotal
                     ];
-                    $total += $itemTotal;
+                    $subtotal += $itemTotal;
                 }
             }
 
@@ -483,6 +585,12 @@ class EcommerceController extends Controller
                 ]);
             }
 
+            // Get shipping data
+            $shippingCost = $request->input('shipping_cost', 0);
+            $shippingService = $request->input('shipping_service', 'STANDARD');
+            $shippingDeliveryTime = $request->input('shipping_delivery_time', 7);
+            $total = $subtotal + $shippingCost;
+
             // Create order
             $order = Order::create([
                 'customer_id' => $customer->id,
@@ -490,7 +598,10 @@ class EcommerceController extends Controller
                 'status' => 'pending',
                 'payment_status' => 'paid',
                 'payment_method' => 'card',
-                'total_amount' => $total,
+                'subtotal' => $subtotal,
+                'shipping' => $shippingCost,
+                'total' => $total,
+                'total_amount' => $total, // For compatibility
                 'shipping_address_json' => json_encode([
                     'address' => $customerData['address'],
                     'number' => $customerData['number'],
@@ -499,6 +610,8 @@ class EcommerceController extends Controller
                     'city' => $customerData['city'],
                     'state' => $customerData['state'],
                     'zip_code' => $customerData['zip_code'],
+                    'shipping_service' => $shippingService,
+                    'delivery_time' => $shippingDeliveryTime,
                 ]),
                 'notes' => $customerData['notes'] ?? null,
                 'stripe_payment_intent_id' => $request->input('payment_intent_id'),
