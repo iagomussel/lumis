@@ -19,11 +19,11 @@ return [
     ],
 
     'logo' => [
-        'main' => env('STORE_LOGO', '/images/branding/logo-main.png'),
-        'icon' => env('STORE_LOGO_ICON', '/images/branding/logo-icon.png'),
-        'favicon' => env('STORE_FAVICON', '/images/branding/favicon.ico'),
-        'dark' => env('STORE_LOGO_DARK', '/images/branding/logo-dark.png'),
-        'white' => env('STORE_LOGO_WHITE', '/images/branding/logo-white.png'),
+        'main' => env('STORE_LOGO', '/images/branding/logo-main.svg'),
+        'icon' => env('STORE_LOGO_ICON', '/images/branding/logo-icon.svg'),
+        'favicon' => env('STORE_FAVICON', '/images/branding/logo-icon.svg'),
+        'dark' => env('STORE_LOGO_DARK', '/images/branding/logo-main.svg'),
+        'white' => env('STORE_LOGO_WHITE', '/images/branding/logo-main.svg'),
     ],
 
     'colors' => [
