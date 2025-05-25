@@ -88,6 +88,14 @@
                             </li>
 
                             <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.product-options.*') ? 'active' : '' }}"
+                                   href="{{ route('admin.product-options.index') }}">
+                                    <i class="ti ti-settings ps-2 text-2xl"></i> 
+                                    <span>Opções de Produtos</span>
+                                </a>
+                            </li>
+
+                            <li class="sidebar-item">
                                 <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}"
                                    href="{{ route('admin.inventory.index') }}">
                                     <i class="ti ti-archive ps-2 text-2xl"></i> 

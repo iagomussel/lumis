@@ -99,6 +99,28 @@ class Product extends Model
                     ->withTimestamps();
     }
 
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function activeVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->where('active', true);
+    }
+
+    public function options(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductOption::class, 'product_option_assignments')
+                    ->withPivot('available_values', 'required', 'sort_order')
+                    ->withTimestamps();
+    }
+
+    public function optionAssignments(): HasMany
+    {
+        return $this->hasMany(ProductOptionAssignment::class);
+    }
+
     // Scopes
     public function scopeActive($query)
     {
@@ -331,6 +353,27 @@ class Product extends Model
         return $this->designs()->count();
     }
 
+    // Variant-related accessors
+    public function getHasVariantsAttribute()
+    {
+        return $this->variants()->exists();
+    }
+
+    public function getActiveVariantsCountAttribute()
+    {
+        return $this->activeVariants()->count();
+    }
+
+    public function getTotalVariantStockAttribute()
+    {
+        return $this->activeVariants()->sum('stock_quantity');
+    }
+
+    public function getVariantOptionsAttribute()
+    {
+        return $this->options()->active()->ordered()->get();
+    }
+
     // Business logic methods
     public function canBeOrdered($quantity = 1)
     {
@@ -435,5 +478,65 @@ class Product extends Model
         $baseDays += 1;
         
         return $baseDays;
+    }
+
+    // Variant management methods
+    public function createVariant($optionValues, $additionalData = [])
+    {
+        $sku = ProductVariant::generateUniqueSku($this->sku, $optionValues);
+        $name = $this->generateVariantName($optionValues);
+
+        $variantData = array_merge([
+            'sku' => $sku,
+            'name' => $name,
+            'option_values' => $optionValues,
+            'stock_quantity' => 0,
+            'min_stock' => $this->min_stock,
+            'active' => true,
+        ], $additionalData);
+
+        return $this->variants()->create($variantData);
+    }
+
+    private function generateVariantName($optionValues)
+    {
+        $optionParts = collect($optionValues)->values()->join(' ');
+        return $this->name . ' - ' . $optionParts;
+    }
+
+    public function getVariantByOptions($optionValues)
+    {
+        return $this->variants()
+                    ->where('option_values', json_encode($optionValues))
+                    ->where('active', true)
+                    ->first();
+    }
+
+    public function hasOptionCombination($optionValues)
+    {
+        return $this->getVariantByOptions($optionValues) !== null;
+    }
+
+    public function getAvailableStockForOptions($optionValues)
+    {
+        $variant = $this->getVariantByOptions($optionValues);
+        
+        if ($variant) {
+            return $variant->stock_quantity;
+        }
+        
+        // Se não tem variantes, usar estoque do produto principal
+        return $this->has_variants ? 0 : $this->stock_quantity;
+    }
+
+    public function canBeOrderedWithOptions($optionValues, $quantity = 1)
+    {
+        if (!$this->has_variants) {
+            return $this->canBeOrdered($quantity);
+        }
+
+        $variant = $this->getVariantByOptions($optionValues);
+        
+        return $variant ? $variant->canBeOrdered($quantity) : false;
     }
 }

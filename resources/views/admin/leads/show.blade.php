@@ -9,6 +9,19 @@
             <i class="ti ti-edit mr-2"></i>
             Editar
         </a>
+        @if($lead->status !== 'won' && $lead->status !== 'lost')
+            <form action="{{ route('admin.leads.convert-to-customer', $lead) }}" 
+                  method="POST" 
+                  class="inline"
+                  onsubmit="return confirm('Tem certeza que deseja converter este lead em cliente?')">
+                @csrf
+                <button type="submit" 
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg inline-flex items-center font-medium">
+                    <i class="ti ti-user-plus mr-2"></i>
+                    Converter em Cliente
+                </button>
+            </form>
+        @endif
         <a href="{{ route('admin.leads.index') }}"
             class="btn-outline-primary font-medium hover:bg-blue-600 hover:text-white inline-flex items-center">
             <i class="ti ti-arrow-left mr-2"></i>

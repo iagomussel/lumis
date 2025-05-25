@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\FinancialController;
 use App\Http\Controllers\Admin\ProductionController;
+use App\Http\Controllers\Admin\ProductOptionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EcommerceController;
 use App\Http\Controllers\Auth\CustomerAuthController;
@@ -84,6 +85,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Gestão de Produtos
     Route::resource('products', ProductController::class);
     
+    // Gestão de Opções de Produtos
+    Route::resource('product-options', ProductOptionController::class);
+    Route::post('product-options/{productOption}/toggle-status', [ProductOptionController::class, 'toggleStatus'])->name('product-options.toggle-status');
+    
     // Gestão de Clientes
     Route::resource('customers', CustomerController::class);
     
@@ -130,6 +135,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     
     // Gestão de Leads
     Route::resource('leads', LeadController::class);
+    Route::post('leads/{lead}/convert-to-customer', [LeadController::class, 'convertToCustomer'])->name('leads.convert-to-customer');
     
     // Gestão de Promoções
     Route::resource('promotions', PromotionController::class);

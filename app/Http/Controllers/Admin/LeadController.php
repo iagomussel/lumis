@@ -147,4 +147,47 @@ class LeadController extends Controller
         return redirect()->route('admin.leads.index')
             ->with('success', 'Lead excluído com sucesso!');
     }
+
+    /**
+     * Convert lead to customer
+     */
+    public function convertToCustomer(Lead $lead)
+    {
+        // Verificar se já existe cliente com o mesmo email
+        if ($lead->email && \App\Models\Customer::where('email', $lead->email)->exists()) {
+            return redirect()->back()
+                           ->with('error', 'Já existe um cliente cadastrado com este email.');
+        }
+
+        try {
+            \DB::transaction(function () use ($lead) {
+                // Criar customer a partir dos dados do lead
+                $customerData = [
+                    'name' => $lead->name,
+                    'email' => $lead->email,
+                    'phone' => $lead->phone,
+                    'type' => $lead->company ? 'company' : 'individual',
+                    'company_name' => $lead->company,
+                    'status' => 'active',
+                    'notes' => "Cliente convertido do lead #{$lead->id}\n\n" . $lead->notes,
+                ];
+
+                $customer = \App\Models\Customer::create($customerData);
+
+                // Atualizar status do lead para "won"
+                $lead->update([
+                    'status' => 'won',
+                    'notes' => $lead->notes . "\n\n[CONVERTIDO] Cliente criado em " . now()->format('d/m/Y H:i')
+                ]);
+
+                session()->flash('customer_created_id', $customer->id);
+            });
+
+            return redirect()->route('admin.leads.index')
+                           ->with('success', 'Lead convertido em cliente com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                           ->with('error', 'Erro ao converter lead: ' . $e->getMessage());
+        }
+    }
 }
