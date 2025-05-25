@@ -101,10 +101,11 @@
                                 <option value="new" {{ old('status', $lead->status) === 'new' ? 'selected' : '' }}>Novo</option>
                                 <option value="contacted" {{ old('status', $lead->status) === 'contacted' ? 'selected' : '' }}>Contatado</option>
                                 <option value="qualified" {{ old('status', $lead->status) === 'qualified' ? 'selected' : '' }}>Qualificado</option>
-                                <option value="proposal" {{ old('status', $lead->status) === 'proposal' ? 'selected' : '' }}>Proposta</option>
+                                <option value="proposal_sent" {{ old('status', $lead->status) === 'proposal_sent' ? 'selected' : '' }}>Proposta Enviada</option>
                                 <option value="negotiation" {{ old('status', $lead->status) === 'negotiation' ? 'selected' : '' }}>Negociação</option>
                                 <option value="won" {{ old('status', $lead->status) === 'won' ? 'selected' : '' }}>Ganho</option>
                                 <option value="lost" {{ old('status', $lead->status) === 'lost' ? 'selected' : '' }}>Perdido</option>
+                                <option value="unqualified" {{ old('status', $lead->status) === 'unqualified' ? 'selected' : '' }}>Não Qualificado</option>
                             </select>
                             @error('status')
                                 <p class="text-sm text-red-500 mt-2">{{ $message }}</p>
@@ -118,10 +119,12 @@
                                 <option value="">Selecione...</option>
                                 <option value="website" {{ old('source', $lead->source) === 'website' ? 'selected' : '' }}>Website</option>
                                 <option value="social_media" {{ old('source', $lead->source) === 'social_media' ? 'selected' : '' }}>Redes Sociais</option>
+                                <option value="email_campaign" {{ old('source', $lead->source) === 'email_campaign' ? 'selected' : '' }}>Campanha de Email</option>
                                 <option value="referral" {{ old('source', $lead->source) === 'referral' ? 'selected' : '' }}>Indicação</option>
-                                <option value="advertising" {{ old('source', $lead->source) === 'advertising' ? 'selected' : '' }}>Publicidade</option>
+                                <option value="trade_show" {{ old('source', $lead->source) === 'trade_show' ? 'selected' : '' }}>Feira/Evento</option>
                                 <option value="cold_call" {{ old('source', $lead->source) === 'cold_call' ? 'selected' : '' }}>Cold Call</option>
-                                <option value="event" {{ old('source', $lead->source) === 'event' ? 'selected' : '' }}>Evento</option>
+                                <option value="organic_search" {{ old('source', $lead->source) === 'organic_search' ? 'selected' : '' }}>Busca Orgânica</option>
+                                <option value="paid_ads" {{ old('source', $lead->source) === 'paid_ads' ? 'selected' : '' }}>Anúncios Pagos</option>
                                 <option value="other" {{ old('source', $lead->source) === 'other' ? 'selected' : '' }}>Outro</option>
                             </select>
                             @error('source')

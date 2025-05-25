@@ -94,10 +94,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('orders/{order}/print', [OrderController::class, 'print'])->name('orders.print');
     
     // Gestão de Estoque (Inventory Management)
-    Route::resource('inventory', \App\Http\Controllers\Admin\InventoryController::class)->except(['show']); // 'show' might not be needed or used for history
-    // Example for a specific stock adjustment route, if needed separately
-    // Route::get('inventory/{product}/adjust', [\App\Http\Controllers\Admin\InventoryController::class, 'edit'])->name('inventory.adjust');
-    // Route::put('inventory/{product}/adjust', [\App\Http\Controllers\Admin\InventoryController::class, 'update']);
+    Route::resource('inventory', \App\Http\Controllers\Admin\InventoryController::class);
+    Route::post('inventory/bulk-update', [\App\Http\Controllers\Admin\InventoryController::class, 'bulkUpdate'])->name('inventory.bulk-update');
+    Route::get('inventory/export', [\App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
     
     // PDV (Ponto de Venda)
     Route::prefix('pos')->name('pos.')->group(function () {

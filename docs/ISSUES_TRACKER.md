@@ -3,50 +3,59 @@
 ## 🚨 Erros Críticos (PDV)
 
 ### 1. PDV - Busca de Produtos não funciona
-- **Status**: 🔴 Pendente
+- **Status**: ✅ Resolvido
 - **Prioridade**: Alta
-- **Descrição**: A funcionalidade de buscar produtos no PDV, ao digitar nada acontece
+- **Descrição**: A funcionalidade de buscar produtos no PDV estava com problemas de JavaScript
 - **Arquivo relacionado**: `resources/views/admin/pos/index.blade.php`
 - **Controller**: `app/Http/Controllers/Admin/PosController.php`
 - **Problema identificado**:
-  - JavaScript está implementado corretamente
-  - Route existe e controller funciona
-  - Possível problema de autenticação ou JavaScript não executando
-  - Endpoint retorna "Unauthenticated" quando testado sem login
-- **Investigação necessária**:
-  - Verificar se usuário está logado corretamente
-  - Verificar console do browser para erros JavaScript
-  - Verificar se CSRF token está sendo enviado
-  - Verificar se elementos DOM estão sendo encontrados
+  - Layout admin não tinha `@stack('scripts')` no final
+  - JavaScript em `@push('scripts')` não estava sendo renderizado
+  - Busca de produtos não funcionava por falta de JavaScript
+- **Sintomas reportados**:
+  - "Ao digitar nada acontece" na busca de produtos
+  - JavaScript implementado mas não executava
+  - Endpoint funcionava mas interface não respondia
 - **Correções aplicadas**:
-  - ✅ JavaScript robusto com logs de debug
-  - ✅ Verificação de elementos DOM
-  - ✅ Headers CSRF corretos
-  - ✅ Tratamento de erros melhorado
-  - ✅ Indicadores visuais de loading
-- **Teste criado**: `/admin/pos/test` para verificar AJAX
-- **Data**: 2025-05-25
+  - ✅ Adicionado `@stack('scripts')` no final do layout admin.blade.php
+  - ✅ JavaScript agora carrega corretamente
+  - ✅ Busca de produtos funcionando perfeitamente
+  - ✅ Produtos aparecem na interface
+  - ✅ Carrinho funciona corretamente
+  - ✅ Botão "Finalizar Venda" habilita quando há produtos
+- **Teste realizado**:
+  - ✅ Busca por produtos retorna resultados corretos
+  - ✅ Produtos são exibidos com preço e estoque
+  - ✅ Clique no produto adiciona ao carrinho
+  - ✅ Interface totalmente funcional
+- **Data resolvida**: 2025-05-25
 
 ### 2. PDV - Busca de Cliente não funciona  
-- **Status**: 🔴 Pendente
+- **Status**: ✅ Resolvido
 - **Prioridade**: Alta
-- **Descrição**: A funcionalidade de buscar clientes no PDV não estava funcionando
+- **Descrição**: A funcionalidade de buscar clientes no PDV estava com problemas de JavaScript
 - **Arquivo relacionado**: `resources/views/admin/pos/index.blade.php`
 - **Controller**: `app/Http/Controllers/Admin/POSController.php`
-- **Problema similar ao #1**:
-  - Mesmo problema de autenticação/JavaScript
-  - Código implementado corretamente
-  - Necessita investigação de autenticação
+- **Problema identificado**:
+  - Mesmo problema da Issue #1: falta de `@stack('scripts')` no layout
+  - JavaScript de busca de clientes não carregava
+  - Interface não respondia aos eventos de busca
+- **Sintomas reportados**:
+  - Busca de clientes não funcionava
+  - JavaScript implementado mas não executava
+  - Dropdown de clientes não atualizava dinamicamente
 - **Correções aplicadas**:
-  - ✅ JavaScript robusto com logs de debug
-  - ✅ Verificação de elementos DOM
-  - ✅ Headers CSRF corretos
-  - ✅ Tratamento de erros melhorado
-  - ✅ Indicadores visuais de loading
+  - ✅ Resolvido junto com Issue #1 ao adicionar `@stack('scripts')`
+  - ✅ JavaScript de busca de clientes funcionando
   - ✅ Interface visual aprimorada com ícones
   - ✅ Seleção dinâmica no dropdown principal
-- **Teste criado**: `/admin/pos/test-customers` para verificar AJAX
-- **Data**: 2025-05-25
+  - ✅ Busca em tempo real funcionando
+  - ✅ Indicadores visuais de loading
+- **Teste realizado**:
+  - ✅ Busca de clientes retorna resultados corretos
+  - ✅ Seleção de cliente atualiza informações na venda
+  - ✅ Interface totalmente funcional
+- **Data resolvida**: 2025-05-25
 
 ## 💰 Funcionalidades de Pagamento
 
@@ -98,13 +107,19 @@
 ## 📋 Páginas Faltantes
 
 ### 7. Página de Leads
-- **Status**: 🔴 Pendente
+- **Status**: ✅ Resolvido
 - **Prioridade**: Média
-- **Descrição**: Interface para gerenciamento de leads não existe
-- **Arquivos a criar**: 
-  - `app/Http/Controllers/Admin/LeadController.php`
-  - `resources/views/admin/leads/`
-  - Adicionar rota e menu
+- **Descrição**: Interface para gerenciamento de leads implementada
+- **Correções aplicadas**:
+  - ✅ Controller `LeadController` implementado com CRUD completo
+  - ✅ Views modernas criadas (index, create, edit, show)
+  - ✅ Sistema de filtros avançados (busca, status, origem, responsável)
+  - ✅ Validação corrigida para campos obrigatórios/opcionais
+  - ✅ Valores padrão definidos para score e probability
+  - ✅ Inconsistências entre migration e controller corrigidas
+  - ✅ Interface moderna seguindo padrões estabelecidos
+  - ✅ Rotas configuradas corretamente
+- **Data resolvida**: 2025-05-25
 
 ### 8. Página de Purchases (Compras)
 - **Status**: 🔴 Pendente
@@ -240,27 +255,32 @@
 - **Data identificada**: 2025-05-25
 
 ### 16. Sistema de Estoque Inexistente
-- **Status**: 🔴 Pendente
+- **Status**: ✅ Resolvido
 - **Prioridade**: Crítica
-- **Descrição**: Não existe interface para controle de estoque no sistema
+- **Descrição**: Sistema completo de controle de estoque implementado
 - **Problema identificado**:
   - Produtos têm campo `stock_quantity` no banco
   - PDV verifica estoque antes de vender
-  - Mas não há interface para gerenciar/atualizar estoque
-  - Não há controller `InventoryController`
-  - Não há views de estoque
-  - Não há menu para estoque
-- **Impacto crítico**:
-  - Impossível atualizar estoque quando chegam produtos
-  - Impossível fazer inventário
-  - Impossível corrigir divergências de estoque
-  - Sistema de vendas pode falhar por falta de estoque
-- **Arquivos necessários**:
-  - `app/Http/Controllers/Admin/InventoryController.php`
-  - `resources/views/admin/inventory/`
-  - Rotas para estoque
-  - Item no menu admin
-- **Data identificada**: 2025-05-25
+  - Mas não havia interface para gerenciar/atualizar estoque
+- **Correções aplicadas**:
+  - ✅ Controller `InventoryController` modernizado com filtros avançados
+  - ✅ Views modernas criadas (index, edit, show)
+  - ✅ Sistema de ajuste de estoque (definir, adicionar, subtrair)
+  - ✅ Estatísticas de estoque (total, baixo, sem estoque, valor total)
+  - ✅ Filtros por categoria, status do estoque, status do produto
+  - ✅ Edição em lote de quantidades
+  - ✅ Preview em tempo real dos ajustes
+  - ✅ Alertas visuais para estoque baixo/zerado
+  - ✅ Interface moderna seguindo padrões estabelecidos
+  - ✅ Rotas configuradas corretamente
+- **Funcionalidades implementadas**:
+  - Interface principal com estatísticas e filtros
+  - Ajuste individual de estoque com tipos (definir/adicionar/subtrair)
+  - Visualização detalhada de produtos
+  - Edição em lote para múltiplos produtos
+  - Alertas visuais baseados no nível de estoque
+  - Integração com sistema de produtos
+- **Data resolvida**: 2025-05-25
 
 ## 🚨 Issues de Segurança e Performance
 
@@ -634,7 +654,7 @@
   - Interface de seleção no PDV e e-commerce
 - **Data identificada**: 2025-05-25
 
-### 33. Sistema de Preços Diferenciados por Opcionais
+### 33. Sistema de Preços Diferenciados por variantes
 - **Status**: 🔴 Pendente
 - **Prioridade**: Alta
 - **Descrição**: Alguns opcionais devem ter preços diferentes (ex: cor especial +R$10)
@@ -781,19 +801,113 @@
   - ✅ Interface totalmente funcional
 - **Data resolvida**: 2025-05-25
 
+### 39. Leads - Erro de Constraint Violation em Campos Obrigatórios
+- **Status**: ✅ Resolvido
+- **Prioridade**: Alta
+- **Descrição**: Erro "Integrity constraint violation: 1048 Column 'score' cannot be null" ao salvar leads
+- **Problema identificado**:
+  - Migration define `score` e `probability` com `default(0)` 
+  - Controller permite valores `nullable` na validação
+  - Quando campos vêm vazios do formulário, Laravel tenta inserir `null` ao invés de usar default
+  - Inconsistências entre migration e controller nos valores de enum (status e source)
+- **Sintomas reportados**:
+  - "apenas o nome deve ser obrigatório, ao salvar getting error Integrity constraint violation"
+  - Erro SQL ao tentar inserir valores null em campos com default
+- **Inconsistências encontradas**:
+  - Status: Migration tem `proposal_sent` mas controller tinha `proposal`
+  - Source: Migration tem `email_campaign`, `trade_show`, `organic_search`, `paid_ads` mas controller tinha `advertising`, `event`
+- **Correções aplicadas**:
+  - ✅ Controller: Definir valores padrão explícitos para `score` e `probability` (0)
+  - ✅ Controller: Corrigir validação de status para incluir todos os valores da migration
+  - ✅ Controller: Corrigir validação de source para usar valores corretos da migration
+  - ✅ Views: Atualizar opções de status e source para usar valores corretos
+  - ✅ Model: Adicionar `$attributes` com valores padrão para garantir consistência
+  - ✅ Views: Corrigir filtros e exibição de status/source na view index
+  - ✅ Views: Atualizar ícones e labels para novos valores
+- **Funcionalidades corrigidas**:
+  - Criação de leads com apenas nome obrigatório
+  - Filtros funcionando com valores corretos
+  - Exibição consistente de status e origem
+  - Validação adequada no backend
+- **Data resolvida**: 2025-05-25
+
+### 40. Sistema Não Responsivo para Dispositivos Móveis
+- **Status**: 🔴 Pendente
+- **Prioridade**: Alta
+- **Descrição**: Sistema precisa ser otimizado para dispositivos móveis (smartphones e tablets)
+- **Problema identificado**:
+  - Interface atual foi desenvolvida principalmente para desktop
+  - Tabelas podem não ser responsivas em telas pequenas
+  - Formulários podem ter problemas de usabilidade em mobile
+  - Menu lateral pode não funcionar adequadamente em mobile
+  - PDV precisa ser especialmente otimizado para tablets
+- **Problemas específicos encontrados**:
+  - **Layout Admin**: Sidebar fixa com `margin-left: 270px` quebra em mobile
+  - **Tabelas**: Uso de `min-w-full` sem alternativas mobile (cards)
+  - **PDV**: Layout com `w-96` sidebar não funciona em tablets
+  - **Formulários**: Grids `md:grid-cols-2` podem ser pequenos em mobile
+  - **Botões**: Alguns botões podem ser pequenos para touch
+  - **Menu**: Não há implementação de menu hamburger
+- **Áreas críticas que precisam de otimização**:
+  - **Admin Panel**: Menu lateral, tabelas, formulários
+  - **PDV**: Interface de vendas para tablets
+  - **E-commerce**: Experiência de compra mobile
+  - **Login/Registro**: Formulários mobile-friendly
+- **Impacto UX**:
+  - Usuários não conseguem usar o sistema adequadamente em mobile
+  - PDV inutilizável em tablets
+  - Experiência frustrante para clientes no e-commerce mobile
+  - Perda de vendas por problemas de usabilidade
+  - Tabelas cortadas em telas pequenas
+  - Menu inacessível em dispositivos móveis
+- **Soluções necessárias**:
+  - **Layout Responsivo**: Implementar menu hamburger e sidebar colapsável
+  - **Tabelas Mobile**: Criar versão em cards para telas pequenas
+  - **PDV Tablet**: Redesenhar layout para tablets (sidebar menor ou colapsável)
+  - **Formulários Touch**: Aumentar tamanhos de campos e botões
+  - **Breakpoints**: Definir breakpoints adequados (sm, md, lg, xl)
+  - **Testes**: Testar em diferentes dispositivos e resoluções
+- **Tecnologias a utilizar**:
+  - Tailwind CSS responsive utilities (`sm:`, `md:`, `lg:`, `xl:`)
+  - CSS Grid e Flexbox responsivos
+  - JavaScript para menu hamburger
+  - Touch-friendly components (min-height: 44px)
+  - Viewport meta tag otimizada
+- **Arquivos a modificar**:
+  - `resources/views/layouts/admin.blade.php` (menu hamburger)
+  - `resources/views/admin/*/index.blade.php` (tabelas → cards)
+  - `resources/views/admin/pos/index.blade.php` (layout tablet)
+  - `resources/css/app.css` (media queries customizadas)
+- **Prioridade por seção**:
+  - 🔥 **Crítico**: PDV (tablets) - Layout completamente quebrado
+  - 🔥 **Crítico**: Admin Tables (smartphones) - Tabelas ilegíveis
+  - ⚡ **Alto**: Admin Menu (mobile) - Menu inacessível
+  - ⚡ **Alto**: E-commerce (smartphones) - Experiência de compra
+  - ⚡ **Alto**: Login/Registro (smartphones) - Formulários pequenos
+- **Breakpoints sugeridos**:
+  - `sm: 640px` - Smartphones grandes
+  - `md: 768px` - Tablets pequenos
+  - `lg: 1024px` - Tablets grandes
+  - `xl: 1280px` - Desktop
+- **Data identificada**: 2025-05-25
+
 ## 📊 Resumo Atualizado por Prioridade
 
 ### 🔥 Alta Prioridade (Crítico)
-1. ✅ **RESOLVIDO**: PDV JavaScript Functions (#30)
-2. ✅ **RESOLVIDO**: Purchase Model Fields (#31)
-3. ✅ **RESOLVIDO**: PDV - Produtos Não Aparecem na Busca (#38)
-4. 🔴 Sistema de Opcionais de Produtos (#32)
-5. 🔴 Sistema de Preços Diferenciados (#33)
-6. 🔴 Sistema de Kits de Produtos (#34)
-7. 🔴 Interface PDV para Opcionais (#35)
-8. 🔴 Controle de Estoque por Variantes (#37)
-9. 🔴 Sistema de Estoque Inexistente (#16)
-10. 🔴 View de Edição de Categorias (#11)
+1. ✅ **RESOLVIDO**: PDV - Busca de Produtos não funciona (#1)
+2. ✅ **RESOLVIDO**: PDV - Busca de Cliente não funciona (#2)
+3. ✅ **RESOLVIDO**: PDV JavaScript Functions (#30)
+4. ✅ **RESOLVIDO**: Purchase Model Fields (#31)
+5. ✅ **RESOLVIDO**: PDV - Produtos Não Aparecem na Busca (#38)
+6. ✅ **RESOLVIDO**: Sistema de Estoque Inexistente (#16)
+7. ✅ **RESOLVIDO**: Leads - Erro de Constraint Violation (#39)
+8. 🔴 Sistema Não Responsivo para Dispositivos Móveis (#40)
+9. 🔴 Sistema de Opcionais de Produtos (#32)
+10. 🔴 Sistema de Preços Diferenciados (#33)
+11. 🔴 Sistema de Kits de Produtos (#34)
+12. 🔴 Interface PDV para Opcionais (#35)
+13. 🔴 Controle de Estoque por Variantes (#37)
+14. 🔴 View de Edição de Categorias (#11)
 
 ### ⚡ Média Prioridade
 11. 🔴 Interface E-commerce para Opcionais (#36)
@@ -803,10 +917,11 @@
 
 ---
 
-**Última atualização**: 25/05/2025 (PDV totalmente funcional)
-**Total de issues**: 38
-**Issues críticas**: 15
-**Issues resolvidas**: 3
+**Última atualização**: 25/05/2025 (PDV Busca Produtos e Clientes Resolvidos)
+**Total de issues**: 40
+**Issues críticas**: 16
+**Issues resolvidas**: 8
 **Novas funcionalidades**: 6 (opcionais, preços, kits, interfaces)
-**Foco atual**: Sistema de opcionais e variantes de produtos
-**Última correção**: PDV - Busca de produtos funcionando perfeitamente 
+**Issues de UX**: 1 (responsividade mobile)
+**Foco atual**: Responsividade para dispositivos móveis e sistema de opcionais
+**Últimas resoluções**: Issues #1 e #2 - PDV busca de produtos e clientes funcionando 

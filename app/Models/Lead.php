@@ -37,6 +37,12 @@ class Lead extends Model
         'next_follow_up_at' => 'datetime',
     ];
 
+    protected $attributes = [
+        'score' => 0,
+        'probability' => 0,
+        'status' => 'new',
+    ];
+
     // Relacionamentos
     public function user(): BelongsTo
     {

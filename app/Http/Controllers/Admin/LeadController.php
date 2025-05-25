@@ -65,8 +65,8 @@ class LeadController extends Controller
             'phone' => 'nullable|string|max:20',
             'company' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:100',
-            'status' => 'required|in:new,contacted,qualified,proposal,negotiation,won,lost',
-            'source' => 'nullable|in:website,social_media,referral,advertising,cold_call,event,other',
+            'status' => 'required|in:new,contacted,qualified,proposal_sent,negotiation,won,lost,unqualified',
+            'source' => 'nullable|in:website,social_media,email_campaign,referral,trade_show,cold_call,organic_search,paid_ads,other',
             'score' => 'nullable|integer|min:0|max:100',
             'estimated_value' => 'nullable|numeric|min:0',
             'probability' => 'nullable|integer|min:0|max:100',
@@ -76,6 +76,9 @@ class LeadController extends Controller
             'next_follow_up_at' => 'nullable|datetime',
         ]);
 
+        // Definir valores padrão para campos que não podem ser null no banco
+        $validated['score'] = $validated['score'] ?? 0;
+        $validated['probability'] = $validated['probability'] ?? 0;
         $validated['last_contact_at'] = now();
 
         $lead = Lead::create($validated);
@@ -113,8 +116,8 @@ class LeadController extends Controller
             'phone' => 'nullable|string|max:20',
             'company' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:100',
-            'status' => 'required|in:new,contacted,qualified,proposal,negotiation,won,lost',
-            'source' => 'nullable|in:website,social_media,referral,advertising,cold_call,event,other',
+            'status' => 'required|in:new,contacted,qualified,proposal_sent,negotiation,won,lost,unqualified',
+            'source' => 'nullable|in:website,social_media,email_campaign,referral,trade_show,cold_call,organic_search,paid_ads,other',
             'score' => 'nullable|integer|min:0|max:100',
             'estimated_value' => 'nullable|numeric|min:0',
             'probability' => 'nullable|integer|min:0|max:100',
@@ -123,6 +126,10 @@ class LeadController extends Controller
             'notes' => 'nullable|string',
             'next_follow_up_at' => 'nullable|datetime',
         ]);
+
+        // Definir valores padrão para campos que não podem ser null no banco
+        $validated['score'] = $validated['score'] ?? 0;
+        $validated['probability'] = $validated['probability'] ?? 0;
 
         $lead->update($validated);
 
