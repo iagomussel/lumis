@@ -23,7 +23,8 @@ return new class extends Migration
             $table->enum('status', ['pending', 'processed', 'cancelled'])->default('pending');
             $table->string('payment_method')->nullable();
             $table->string('reference_number')->nullable();
-            $table->nullableMorphs('transactionable');
+            $table->string('transactionable_type')->nullable();
+            $table->unsignedBigInteger('transactionable_id')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('notes')->nullable();
             $table->timestamps();
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index(['reference_date']);
             $table->index(['account_id', 'type']);
             $table->index(['category']);
+            $table->index(['transactionable_type', 'transactionable_id'], 'fin_trans_morph_index');
         });
     }
 

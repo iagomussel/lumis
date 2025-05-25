@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('promotion_start')->nullable()->after('promotional_price');
             $table->timestamp('promotion_end')->nullable()->after('promotion_start');
             $table->integer('min_stock_alert')->default(5)->after('stock_quantity');
+            $table->boolean('online_sale')->default(true)->after('status');
             $table->json('specifications')->nullable()->after('min_stock_alert');
             $table->decimal('rating', 3, 2)->default(0)->after('specifications');
             $table->integer('reviews_count')->default(0)->after('rating');
@@ -36,6 +37,7 @@ return new class extends Migration
                 'promotion_start',
                 'promotion_end',
                 'min_stock_alert',
+                'online_sale',
                 'specifications',
                 'rating',
                 'reviews_count'
