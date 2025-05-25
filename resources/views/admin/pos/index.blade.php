@@ -544,7 +544,7 @@ function startNewSale() {
 // Imprimir cupom
 function printReceipt() {
     if (appState.lastOrderId) {
-        window.open(`{{ route('admin.pos.receipt', '') }}/${appState.lastOrderId}`, '_blank');
+        window.open(`{{ url('admin/pos/receipt') }}/${appState.lastOrderId}`, '_blank');
     }
 }
 
