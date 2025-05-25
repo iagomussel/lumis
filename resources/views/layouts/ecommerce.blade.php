@@ -124,6 +124,7 @@
                     
                     @php
                         $categories = \App\Models\Category::active()
+                            ->ecommerce()
                             ->whereHas('products', function($query) {
                                 $query->availableOnline();
                             })

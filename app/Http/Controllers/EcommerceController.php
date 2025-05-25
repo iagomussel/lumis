@@ -51,6 +51,7 @@ class EcommerceController extends Controller
 
         // Categorias principais
         $categories = Category::active()
+            ->ecommerce()
             ->whereHas('products', function($query) {
                 $query->availableOnline();
             })
@@ -128,6 +129,7 @@ class EcommerceController extends Controller
         $products = $query->paginate(12)->withQueryString();
         
         $categories = Category::active()
+            ->ecommerce()
             ->whereHas('products', function($query) {
                 $query->availableOnline();
             })

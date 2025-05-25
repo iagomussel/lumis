@@ -17,12 +17,15 @@ class Category extends Model
         'type',
         'slug',
         'active',
+        'show_in_ecommerce',
+        'internal_notes',
         'parent_id',
         'image',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'show_in_ecommerce' => 'boolean',
     ];
 
     // Relacionamentos
@@ -47,6 +50,16 @@ class Category extends Model
         return $query->where('active', true);
     }
 
+    public function scopeEcommerce($query)
+    {
+        return $query->where('show_in_ecommerce', true);
+    }
+
+    public function scopeInternal($query)
+    {
+        return $query->where('show_in_ecommerce', false);
+    }
+
     public function scopeInsumos($query)
     {
         return $query->where('type', 'insumo');
@@ -60,5 +73,43 @@ class Category extends Model
     public function scopeParents($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    // Accessors
+    public function getTypeDisplayAttribute()
+    {
+        return match($this->type) {
+            'insumo' => 'Insumo',
+            'ativo' => 'Ativo',
+            default => ucfirst($this->type)
+        };
+    }
+
+    public function getUsageDisplayAttribute()
+    {
+        return $this->show_in_ecommerce ? 'E-commerce' : 'Controle Interno';
+    }
+
+    // Business methods
+    public function getTotalCost()
+    {
+        return $this->products()
+                    ->sum(\DB::raw('cost_price * stock_quantity'));
+    }
+
+    public function getTotalValue()
+    {
+        return $this->products()
+                    ->sum(\DB::raw('price * stock_quantity'));
+    }
+
+    public function getROI()
+    {
+        $totalCost = $this->getTotalCost();
+        $totalValue = $this->getTotalValue();
+        
+        if ($totalCost == 0) return 0;
+        
+        return round((($totalValue - $totalCost) / $totalCost) * 100, 2);
     }
 }
