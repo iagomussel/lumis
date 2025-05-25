@@ -19,6 +19,7 @@ use App\Http\Controllers\Auth\CustomerAuthController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -97,6 +98,15 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/', [POSController::class, 'index'])->name('index');
         Route::get('/test', function() { return view('admin.pos.test'); })->name('test');
         Route::get('/test-customers', function() { return view('admin.pos.test-customers'); })->name('test-customers');
+        Route::get('/debug', function() { 
+            return response()->json([
+                'authenticated' => Auth::check(),
+                'user' => Auth::user() ? Auth::user()->only(['id', 'name', 'email']) : null,
+                'csrf_token' => csrf_token(),
+                'session_id' => session()->getId(),
+                'timestamp' => now()->toISOString()
+            ]); 
+        })->name('debug');
         Route::get('/search-products', [POSController::class, 'searchProducts'])->name('search-products');
         Route::get('/search-customers', [POSController::class, 'searchCustomers'])->name('search-customers');
         Route::get('/product/{product}', [POSController::class, 'getProduct'])->name('get-product');

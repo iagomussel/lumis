@@ -3,6 +3,32 @@
 @section('title', 'PDV - Ponto de Venda')
 
 @section('content')
+<!-- Debug Section - Remove after fixing issues -->
+<div id="debug-section" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+    <h3 class="text-sm font-semibold text-yellow-800 mb-2">🔧 Debug Information</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div>
+            <strong>Authentication:</strong>
+            <div id="auth-status" class="text-gray-600">Checking...</div>
+        </div>
+        <div>
+            <strong>CSRF Token:</strong>
+            <div id="csrf-status" class="text-gray-600">{{ csrf_token() ? 'Present' : 'Missing' }}</div>
+        </div>
+        <div>
+            <strong>JavaScript Status:</strong>
+            <div id="js-status" class="text-gray-600">Loading...</div>
+        </div>
+    </div>
+    <div class="mt-2">
+        <strong>Test Endpoints:</strong>
+        <button onclick="testSearchEndpoint()" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">Test Search</button>
+        <button onclick="testAuthEndpoint()" class="ml-2 px-2 py-1 bg-green-500 text-white rounded text-xs">Test Auth</button>
+        <button onclick="testDebugEndpoint()" class="ml-2 px-2 py-1 bg-purple-500 text-white rounded text-xs">Debug Info</button>
+        <div id="test-results" class="mt-2 text-xs text-gray-600"></div>
+    </div>
+</div>
+
 <div class="h-screen overflow-hidden bg-gray-50">
     <div class="flex h-full">
         <!-- Área Principal - Busca de Produtos -->
@@ -301,40 +327,66 @@ const elements = {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM carregado - Inicializando PDV');
+    console.log('🚀 DOM carregado - Inicializando PDV');
     
     // Verificar se todos os elementos essenciais existem
     const requiredElements = ['product-search', 'products-grid', 'empty-state', 'cart-items', 'empty-cart'];
+    const missingElements = [];
+    
     for (const elementId of requiredElements) {
         const element = document.getElementById(elementId);
         if (!element) {
-            console.error(`Elemento obrigatório não encontrado: ${elementId}`);
-            return;
+            console.error(`❌ Elemento obrigatório não encontrado: ${elementId}`);
+            missingElements.push(elementId);
+        } else {
+            console.log(`✅ Elemento encontrado: ${elementId}`);
         }
     }
     
-    console.log('Todos os elementos encontrados - Inicializando listeners');
-    initializeEventListeners();
-    updateCartDisplay();
-    
-    // Foco inicial no campo de busca
-    if (elements.productSearch) {
-        elements.productSearch.focus();
+    if (missingElements.length > 0) {
+        console.error('🚨 Elementos faltantes:', missingElements);
+        alert('Erro: Elementos HTML faltantes no PDV. Verifique o console para detalhes.');
+        return;
     }
     
-    console.log('PDV inicializado com sucesso');
+    console.log('✅ Todos os elementos encontrados - Inicializando listeners');
+    
+    try {
+        initializeEventListeners();
+        updateCartDisplay();
+        
+        // Foco inicial no campo de busca
+        if (elements.productSearch) {
+            elements.productSearch.focus();
+            console.log('🎯 Foco definido no campo de busca');
+        }
+        
+        console.log('🎉 PDV inicializado com sucesso');
+        
+        // Test search functionality immediately
+        console.log('🧪 Testando funcionalidade de busca...');
+        elements.productSearch.value = 'test';
+        elements.productSearch.dispatchEvent(new Event('input'));
+        
+    } catch (error) {
+        console.error('💥 Erro durante inicialização:', error);
+        alert('Erro durante inicialização do PDV: ' + error.message);
+    }
 });
 
 // Event Listeners
 function initializeEventListeners() {
     // Verificar se todos os elementos existem
     if (!elements.productSearch) {
-        console.error('Elemento product-search não encontrado');
+        console.error('❌ Elemento product-search não encontrado');
         return;
     }
 
+    console.log('🔗 Anexando event listeners...');
+
     // Busca de produtos
     elements.productSearch.addEventListener('input', debounce(searchProducts, 300));
+    console.log('✅ Event listener de busca de produtos anexado');
     
     // Limpar busca
     const clearSearchBtn = document.getElementById('clear-search');
@@ -1008,6 +1060,119 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// Debug Functions
+function updateDebugInfo() {
+    // Update JavaScript status
+    document.getElementById('js-status').textContent = 'Loaded ✅';
+    document.getElementById('js-status').className = 'text-green-600';
+    
+    // Check authentication
+    fetch('{{ route('admin.dashboard') }}', {
+        method: 'GET',
+        headers: {
+            'Accept': 'text/html',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(response => {
+        const authStatus = document.getElementById('auth-status');
+        if (response.ok) {
+            authStatus.textContent = 'Authenticated ✅';
+            authStatus.className = 'text-green-600';
+        } else {
+            authStatus.textContent = 'Not Authenticated ❌';
+            authStatus.className = 'text-red-600';
+        }
+    }).catch(error => {
+        const authStatus = document.getElementById('auth-status');
+        authStatus.textContent = 'Error checking auth ❌';
+        authStatus.className = 'text-red-600';
+    });
+}
+
+async function testSearchEndpoint() {
+    const resultsDiv = document.getElementById('test-results');
+    resultsDiv.innerHTML = 'Testing search endpoint...';
+    
+    try {
+        const response = await fetch('{{ route('admin.pos.search-products') }}?q=test', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.text();
+        resultsDiv.innerHTML = `<strong>Search Test:</strong> Status ${response.status} - ${response.ok ? '✅' : '❌'}<br>Response: ${data.substring(0, 100)}...`;
+        resultsDiv.className = response.ok ? 'mt-2 text-xs text-green-600' : 'mt-2 text-xs text-red-600';
+    } catch (error) {
+        resultsDiv.innerHTML = `<strong>Search Test:</strong> Error - ${error.message}`;
+        resultsDiv.className = 'mt-2 text-xs text-red-600';
+    }
+}
+
+async function testAuthEndpoint() {
+    const resultsDiv = document.getElementById('test-results');
+    resultsDiv.innerHTML = 'Testing authentication...';
+    
+    try {
+        const response = await fetch('{{ route('admin.dashboard') }}', {
+            method: 'GET',
+            headers: {
+                'Accept': 'text/html',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        resultsDiv.innerHTML = `<strong>Auth Test:</strong> Status ${response.status} - ${response.ok ? 'Authenticated ✅' : 'Not Authenticated ❌'}`;
+        resultsDiv.className = response.ok ? 'mt-2 text-xs text-green-600' : 'mt-2 text-xs text-red-600';
+    } catch (error) {
+        resultsDiv.innerHTML = `<strong>Auth Test:</strong> Error - ${error.message}`;
+        resultsDiv.className = 'mt-2 text-xs text-red-600';
+    }
+}
+
+async function testDebugEndpoint() {
+    const resultsDiv = document.getElementById('test-results');
+    resultsDiv.innerHTML = 'Getting debug information...';
+    
+    try {
+        const response = await fetch('{{ route('admin.pos.debug') }}', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            resultsDiv.innerHTML = `
+                <strong>Debug Info:</strong><br>
+                • Authenticated: ${data.authenticated ? '✅' : '❌'}<br>
+                • User: ${data.user ? data.user.name + ' (' + data.user.email + ')' : 'None'}<br>
+                • Session ID: ${data.session_id}<br>
+                • CSRF Token: ${data.csrf_token ? 'Present' : 'Missing'}<br>
+                • Timestamp: ${data.timestamp}
+            `;
+            resultsDiv.className = 'mt-2 text-xs text-green-600';
+        } else {
+            resultsDiv.innerHTML = `<strong>Debug Test:</strong> Status ${response.status} - Failed ❌`;
+            resultsDiv.className = 'mt-2 text-xs text-red-600';
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<strong>Debug Test:</strong> Error - ${error.message}`;
+        resultsDiv.className = 'mt-2 text-xs text-red-600';
+    }
+}
+
+// Initialize debug info when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(updateDebugInfo, 1000); // Wait a bit for page to fully load
+});
 
 
 </script>
