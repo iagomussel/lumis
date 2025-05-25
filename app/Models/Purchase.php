@@ -84,6 +84,12 @@ class Purchase extends Model
         return 'R$ ' . number_format($this->total, 2, ',', '.');
     }
 
+    // Static methods
+    public static function getPossibleStatuses()
+    {
+        return ['pending', 'ordered', 'received', 'cancelled'];
+    }
+
     // Boot method para gerar número da compra
     protected static function boot()
     {

@@ -1090,7 +1090,7 @@ function updateDebugInfo() {
     });
 }
 
-async function testSearchEndpoint() {
+window.testSearchEndpoint = async function() {
     const resultsDiv = document.getElementById('test-results');
     resultsDiv.innerHTML = 'Testing search endpoint...';
     
@@ -1114,7 +1114,8 @@ async function testSearchEndpoint() {
     }
 }
 
-async function testAuthEndpoint() {
+// Make functions global by attaching to window
+window.testAuthEndpoint = async function() {
     const resultsDiv = document.getElementById('test-results');
     resultsDiv.innerHTML = 'Testing authentication...';
     
@@ -1135,7 +1136,7 @@ async function testAuthEndpoint() {
     }
 }
 
-async function testDebugEndpoint() {
+window.testDebugEndpoint = async function() {
     const resultsDiv = document.getElementById('test-results');
     resultsDiv.innerHTML = 'Getting debug information...';
     

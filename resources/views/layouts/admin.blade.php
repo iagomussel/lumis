@@ -87,6 +87,14 @@
                                 </a>
                             </li>
 
+                            <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}"
+                                   href="{{ route('admin.inventory.index') }}">
+                                    <i class="ti ti-archive ps-2 text-2xl"></i> 
+                                    <span>Estoque</span>
+                                </a>
+                            </li>
+
                             <li class="text-xs font-bold mb-4 mt-6">
                                 <span class="text-xs text-gray-400 font-semibold">PDV</span>
                             </li>
