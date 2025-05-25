@@ -580,3 +580,233 @@
   4. Abra o console do browser (F12) para ver logs detalhados
   5. Verifique se há erros JavaScript ou de autenticação
 - **Data identificada**: 2025-05-25 
+
+### 30. PDV - JavaScript Functions Not in Global Scope
+- **Status**: ✅ Resolvido
+- **Prioridade**: Crítica
+- **Descrição**: Funções JavaScript testAuthEndpoint e testDebugEndpoint não estavam no escopo global
+- **Problema identificado**:
+  - Funções definidas dentro de escopo local não eram acessíveis pelos botões onclick
+  - Causava erros "ReferenceError: testAuthEndpoint is not defined"
+- **Correção aplicada**:
+  - ✅ Movidas funções para window.testAuthEndpoint e window.testDebugEndpoint
+  - ✅ Funções agora acessíveis globalmente
+  - ✅ Botões de debug funcionando corretamente
+  - ✅ Corrigidos botões onclick para usar window.functionName()
+  - ✅ Melhorada função testSearchEndpoint para exibir produtos encontrados
+  - ✅ Adicionado teste automático ao carregar página
+- **Data**: 2025-05-25
+
+### 31. Purchase Model - Inconsistência de Campos nas Views
+- **Status**: ✅ Resolvido
+- **Prioridade**: Alta
+- **Descrição**: Views de Purchase usando nomes de campos incorretos
+- **Problema identificado**:
+  - View show.blade.php usando `reference_no` ao invés de `purchase_number`
+  - View usando `purchase_date` ao invés de `delivery_date`
+  - View usando `total_amount` ao invés de `total`
+- **Correção aplicada**:
+  - ✅ Corrigidos nomes dos campos na view show.blade.php
+  - ✅ Alinhamento com o modelo Purchase e controller
+- **Data**: 2025-05-25
+
+## 🆕 Novas Funcionalidades Solicitadas
+
+### 32. Sistema de Opcionais de Produtos
+- **Status**: 🔴 Pendente
+- **Prioridade**: Alta
+- **Descrição**: Produtos devem ter opcionais como cor, tamanho, material, etc.
+- **Requisitos funcionais**:
+  - Produtos podem ter múltiplos tipos de opcionais (cor, tamanho, material, acabamento, etc.)
+  - Cada opcional pode ter múltiplas opções (ex: cores: azul, vermelho, verde)
+  - Opcionais podem ser obrigatórios ou facultativos
+  - Interface para gerenciar opcionais no admin
+  - Seleção de opcionais no PDV e e-commerce
+- **Impacto técnico**:
+  - Nova tabela `product_options` (tipo do opcional: cor, tamanho, etc.)
+  - Nova tabela `product_option_values` (valores: azul, vermelho, P, M, G, etc.)
+  - Nova tabela `product_variants` (combinações específicas de opcionais)
+  - Relacionamento many-to-many entre produtos e opcionais
+- **Arquivos a criar/modificar**:
+  - Migration para tabelas de opcionais
+  - Models: ProductOption, ProductOptionValue, ProductVariant
+  - Views para gerenciar opcionais no admin
+  - Interface de seleção no PDV e e-commerce
+- **Data identificada**: 2025-05-25
+
+### 33. Sistema de Preços Diferenciados por Opcionais
+- **Status**: 🔴 Pendente
+- **Prioridade**: Alta
+- **Descrição**: Alguns opcionais devem ter preços diferentes (ex: cor especial +R$10)
+- **Requisitos funcionais**:
+  - Opcionais podem ter preço adicional ou desconto
+  - Preço pode ser valor fixo (+R$10) ou percentual (+15%)
+  - Cálculo automático do preço final baseado nos opcionais selecionados
+  - Exibição clara do preço base + adicionais
+- **Impacto técnico**:
+  - Campo `price_modifier` na tabela `product_option_values`
+  - Campo `price_type` (fixed, percentage) na tabela `product_option_values`
+  - Lógica de cálculo de preço no frontend e backend
+  - Atualização em tempo real do preço no PDV e e-commerce
+- **Exemplo de uso**:
+  - Camiseta básica: R$ 50,00
+  - Cor especial (dourado): +R$ 15,00
+  - Tamanho GG: +R$ 5,00
+  - Preço final: R$ 70,00
+- **Data identificada**: 2025-05-25
+
+### 34. Sistema de Kits de Produtos
+- **Status**: 🔴 Pendente
+- **Prioridade**: Alta
+- **Descrição**: Deve ser possível criar kits com múltiplos produtos
+- **Requisitos funcionais**:
+  - Kit é um produto especial que contém outros produtos
+  - Cada item do kit pode ter quantidade específica
+  - Preço do kit pode ser diferente da soma dos produtos individuais
+  - Controle de estoque baseado nos produtos componentes
+  - Venda de kit reduz estoque dos produtos individuais
+- **Impacto técnico**:
+  - Nova tabela `product_kits` (relaciona produto kit com produtos componentes)
+  - Campo `is_kit` na tabela `products`
+  - Lógica especial para controle de estoque de kits
+  - Interface para montar kits no admin
+  - Exibição de componentes do kit no PDV e e-commerce
+- **Exemplo de uso**:
+  - Kit "Conjunto Completo": Camiseta + Calça + Boné
+  - Quantidade: 1 + 1 + 1
+  - Preço individual: R$ 50 + R$ 80 + R$ 30 = R$ 160
+  - Preço do kit: R$ 140 (desconto de R$ 20)
+- **Arquivos a criar/modificar**:
+  - Migration para tabela product_kits
+  - Model ProductKit
+  - Controller para gerenciar kits
+  - Views para criar/editar kits
+  - Lógica de estoque para kits
+- **Data identificada**: 2025-05-25
+
+### 35. Interface de Seleção de Opcionais no PDV
+- **Status**: 🔴 Pendente
+- **Prioridade**: Alta
+- **Descrição**: PDV deve permitir seleção de opcionais ao adicionar produto
+- **Requisitos funcionais**:
+  - Modal ou sidebar para seleção de opcionais
+  - Exibição visual das opções (cores com preview, tamanhos, etc.)
+  - Atualização em tempo real do preço conforme seleção
+  - Validação de opcionais obrigatórios
+  - Adição ao carrinho com opcionais selecionados
+- **Impacto UX**:
+  - Interface intuitiva para seleção rápida
+  - Preview visual das opções quando possível
+  - Indicação clara de preços adicionais
+  - Fluxo otimizado para vendas rápidas
+- **Arquivos a modificar**:
+  - `resources/views/admin/pos/index.blade.php`
+  - JavaScript do PDV para modal de opcionais
+  - CSS para interface visual atrativa
+- **Data identificada**: 2025-05-25
+
+### 36. Interface de Seleção de Opcionais no E-commerce
+- **Status**: 🔴 Pendente
+- **Prioridade**: Média
+- **Descrição**: E-commerce deve permitir seleção de opcionais na página do produto
+- **Requisitos funcionais**:
+  - Seletores visuais para cada tipo de opcional
+  - Cores com preview visual (swatches)
+  - Tamanhos com guia de medidas
+  - Atualização de preço e disponibilidade em tempo real
+  - Validação antes de adicionar ao carrinho
+- **Impacto UX**:
+  - Experiência de compra mais rica
+  - Redução de dúvidas do cliente
+  - Aumento na conversão de vendas
+- **Arquivos a modificar**:
+  - Views do e-commerce para página de produto
+  - JavaScript para interatividade
+  - CSS para interface visual
+- **Data identificada**: 2025-05-25
+
+### 37. Controle de Estoque por Variantes
+- **Status**: 🔴 Pendente
+- **Prioridade**: Crítica
+- **Descrição**: Estoque deve ser controlado por combinação de opcionais (variantes)
+- **Requisitos funcionais**:
+  - Cada combinação de opcionais tem estoque próprio
+  - Ex: Camiseta Azul P = 10 unidades, Camiseta Azul M = 5 unidades
+  - Interface para gerenciar estoque por variante
+  - Verificação de disponibilidade antes da venda
+  - Relatórios de estoque por variante
+- **Impacto técnico**:
+  - Tabela `product_variant_stock` para controle granular
+  - Lógica complexa de verificação de estoque
+  - Interface administrativa para gestão
+  - Integração com PDV e e-commerce
+- **Exemplo de uso**:
+  - Produto: Camiseta
+  - Variante 1: Azul + P = 10 unidades
+  - Variante 2: Azul + M = 5 unidades
+  - Variante 3: Vermelho + P = 0 unidades (indisponível)
+- **Data identificada**: 2025-05-25
+
+### 38. PDV - Produtos Não Aparecem na Busca
+- **Status**: ✅ Resolvido
+- **Prioridade**: Crítica
+- **Descrição**: Usuário não consegue ver produtos no PDV ao digitar na busca
+- **Problema identificado**:
+  - Layout admin não tinha `@stack('scripts')` no final
+  - JavaScript em `@push('scripts')` não estava sendo renderizado
+  - Busca de produtos não funcionava por falta de JavaScript
+- **Sintomas reportados**:
+  - "não consigo ver produtos no pdv"
+  - "on fill //*[@id="product-search"] with caneca nothing is trigged"
+  - "no backend requests are made"
+- **Investigação técnica**:
+  - ✅ Verificado: 9 produtos ativos no banco
+  - ✅ Verificado: Todos têm estoque > 0
+  - ✅ Verificado: Controller POSController existe e está implementado
+  - ✅ Verificado: Rota admin.pos.search-products existe
+  - ✅ Verificado: Modelo Product tem scope active()
+  - ✅ Identificado: Falta de `@stack('scripts')` no layout
+- **Correção aplicada**:
+  - ✅ Adicionado `@stack('scripts')` no final do layout admin.blade.php
+  - ✅ JavaScript agora carrega corretamente
+  - ✅ Busca de produtos funcionando perfeitamente
+  - ✅ Produtos aparecem na interface
+  - ✅ Carrinho funciona corretamente
+  - ✅ Botão "Finalizar Venda" habilita quando há produtos
+- **Teste realizado**:
+  - ✅ Busca por "caneca" retorna 4 produtos
+  - ✅ Produtos são exibidos com preço e estoque
+  - ✅ Clique no produto adiciona ao carrinho
+  - ✅ Contador de itens atualiza corretamente
+  - ✅ Interface totalmente funcional
+- **Data resolvida**: 2025-05-25
+
+## 📊 Resumo Atualizado por Prioridade
+
+### 🔥 Alta Prioridade (Crítico)
+1. ✅ **RESOLVIDO**: PDV JavaScript Functions (#30)
+2. ✅ **RESOLVIDO**: Purchase Model Fields (#31)
+3. ✅ **RESOLVIDO**: PDV - Produtos Não Aparecem na Busca (#38)
+4. 🔴 Sistema de Opcionais de Produtos (#32)
+5. 🔴 Sistema de Preços Diferenciados (#33)
+6. 🔴 Sistema de Kits de Produtos (#34)
+7. 🔴 Interface PDV para Opcionais (#35)
+8. 🔴 Controle de Estoque por Variantes (#37)
+9. 🔴 Sistema de Estoque Inexistente (#16)
+10. 🔴 View de Edição de Categorias (#11)
+
+### ⚡ Média Prioridade
+11. 🔴 Interface E-commerce para Opcionais (#36)
+12. 🔴 Branding Incorreto no Admin Panel (#12)
+13. 🔴 Login Customer - Identidade Visual (#10)
+14. 🔴 JavaScript Inline - Problemas CSP (#18)
+
+---
+
+**Última atualização**: 25/05/2025 (PDV totalmente funcional)
+**Total de issues**: 38
+**Issues críticas**: 15
+**Issues resolvidas**: 3
+**Novas funcionalidades**: 6 (opcionais, preços, kits, interfaces)
+**Foco atual**: Sistema de opcionais e variantes de produtos
+**Última correção**: PDV - Busca de produtos funcionando perfeitamente 

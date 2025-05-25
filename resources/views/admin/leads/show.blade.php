@@ -32,7 +32,7 @@
                         </tr>
                         <tr>
                             <td><strong>Empresa:</strong></td>
-                            <td>{{ $lead->company_name ?? 'Não informado' }}</td>
+                            <td>{{ $lead->company ?? 'Não informado' }}</td>
                         </tr>
                     </table>
                 </div>

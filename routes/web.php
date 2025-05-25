@@ -103,6 +103,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::prefix('pos')->name('pos.')->group(function () {
         Route::get('/', [POSController::class, 'index'])->name('index');
         Route::get('/test', function() { return view('admin.pos.test'); })->name('test');
+        Route::get('/test-search', function() { return view('admin.pos.test-search'); })->name('test-search');
         Route::get('/test-customers', function() { return view('admin.pos.test-customers'); })->name('test-customers');
         Route::get('/debug', function() { 
             return response()->json([

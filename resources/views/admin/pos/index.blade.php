@@ -3,31 +3,6 @@
 @section('title', 'PDV - Ponto de Venda')
 
 @section('content')
-<!-- Debug Section - Remove after fixing issues -->
-<div id="debug-section" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-    <h3 class="text-sm font-semibold text-yellow-800 mb-2">🔧 Debug Information</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-        <div>
-            <strong>Authentication:</strong>
-            <div id="auth-status" class="text-gray-600">Checking...</div>
-        </div>
-        <div>
-            <strong>CSRF Token:</strong>
-            <div id="csrf-status" class="text-gray-600">{{ csrf_token() ? 'Present' : 'Missing' }}</div>
-        </div>
-        <div>
-            <strong>JavaScript Status:</strong>
-            <div id="js-status" class="text-gray-600">Loading...</div>
-        </div>
-    </div>
-    <div class="mt-2">
-        <strong>Test Endpoints:</strong>
-        <button onclick="testSearchEndpoint()" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">Test Search</button>
-        <button onclick="testAuthEndpoint()" class="ml-2 px-2 py-1 bg-green-500 text-white rounded text-xs">Test Auth</button>
-        <button onclick="testDebugEndpoint()" class="ml-2 px-2 py-1 bg-purple-500 text-white rounded text-xs">Debug Info</button>
-        <div id="test-results" class="mt-2 text-xs text-gray-600"></div>
-    </div>
-</div>
 
 <div class="h-screen overflow-hidden bg-gray-50">
     <div class="flex h-full">
@@ -72,7 +47,7 @@
 
             <!-- Lista de Produtos -->
             <div class="flex-1 overflow-y-auto p-4">
-                <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 hidden">
                     <!-- Produtos serão carregados aqui via JavaScript -->
                 </div>
                 
@@ -338,8 +313,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!element) {
             console.error(`❌ Elemento obrigatório não encontrado: ${elementId}`);
             missingElements.push(elementId);
-        } else {
-            console.log(`✅ Elemento encontrado: ${elementId}`);
         }
     }
     
@@ -349,8 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    console.log('✅ Todos os elementos encontrados - Inicializando listeners');
-    
     try {
         initializeEventListeners();
         updateCartDisplay();
@@ -358,15 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Foco inicial no campo de busca
         if (elements.productSearch) {
             elements.productSearch.focus();
-            console.log('🎯 Foco definido no campo de busca');
         }
-        
-        console.log('🎉 PDV inicializado com sucesso');
-        
-        // Test search functionality immediately
-        console.log('🧪 Testando funcionalidade de busca...');
-        elements.productSearch.value = 'test';
-        elements.productSearch.dispatchEvent(new Event('input'));
         
     } catch (error) {
         console.error('💥 Erro durante inicialização:', error);
@@ -382,11 +345,8 @@ function initializeEventListeners() {
         return;
     }
 
-    console.log('🔗 Anexando event listeners...');
-
     // Busca de produtos
     elements.productSearch.addEventListener('input', debounce(searchProducts, 300));
-    console.log('✅ Event listener de busca de produtos anexado');
     
     // Limpar busca
     const clearSearchBtn = document.getElementById('clear-search');
@@ -429,12 +389,15 @@ function initializeEventListeners() {
 
 // Busca de produtos - Versão simplificada e robusta
 async function searchProducts() {
-    const query = elements.productSearch.value.trim();
-    
-    console.log('🔍 Iniciando busca:', query);
+    const query = elements.productSearch ? elements.productSearch.value.trim() : '';
     
     if (!query) {
         showEmptyState();
+        return;
+    }
+
+    if (!elements.productsGrid) {
+        console.error('❌ Elemento products-grid não encontrado');
         return;
     }
 
@@ -445,15 +408,13 @@ async function searchProducts() {
             <p class="text-gray-500">Buscando produtos...</p>
         </div>
     `;
-    elements.emptyState.classList.add('hidden');
+    if (elements.emptyState) elements.emptyState.classList.add('hidden');
     elements.productsGrid.classList.remove('hidden');
 
     try {
         // Construir URL
         const baseUrl = '{{ route('admin.pos.search-products') }}';
         const searchUrl = `${baseUrl}?q=${encodeURIComponent(query)}`;
-        
-        console.log('📡 URL da requisição:', searchUrl);
         
         // Fazer requisição
         const response = await fetch(searchUrl, {
@@ -466,8 +427,6 @@ async function searchProducts() {
             credentials: 'same-origin'
         });
         
-        console.log('📊 Status da resposta:', response.status, response.statusText);
-        
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Erro na resposta:', errorText);
@@ -475,7 +434,6 @@ async function searchProducts() {
         }
         
         const products = await response.json();
-        console.log('✅ Produtos recebidos:', products.length, products);
         
         if (!Array.isArray(products)) {
             throw new Error('Resposta inválida: esperado array de produtos');
@@ -509,6 +467,16 @@ function displayProducts(products) {
     const grid = elements.productsGrid;
     const emptyState = elements.emptyState;
     
+    if (!grid) {
+        console.error('❌ Elemento products-grid não encontrado!');
+        return;
+    }
+    
+    if (!emptyState) {
+        console.error('❌ Elemento empty-state não encontrado!');
+        return;
+    }
+    
     if (products.length === 0) {
         grid.classList.add('hidden');
         emptyState.classList.remove('hidden');
@@ -523,7 +491,7 @@ function displayProducts(products) {
     emptyState.classList.add('hidden');
     grid.classList.remove('hidden');
     
-    grid.innerHTML = products.map(product => `
+    const productsHTML = products.map(product => `
         <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer product-card" 
              data-product-id="${product.id}">
             <div class="text-center">
@@ -532,15 +500,19 @@ function displayProducts(products) {
                 </div>
                 <h3 class="font-medium text-gray-900 text-sm mb-1 line-clamp-2">${product.name}</h3>
                 <p class="text-xs text-gray-500 mb-2">${product.sku}</p>
-                <p class="font-semibold text-green-600 mb-2">${product.formatted_price}</p>
+                <p class="font-semibold text-green-600 mb-2">${product.formatted_price || 'R$ ' + product.price}</p>
                 <p class="text-xs text-gray-400">Estoque: ${product.stock_quantity}</p>
                 ${product.category ? `<span class="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">${product.category}</span>` : ''}
             </div>
         </div>
     `).join('');
+    
+    grid.innerHTML = productsHTML;
 
     // Adicionar event listeners aos produtos
-    grid.querySelectorAll('.product-card').forEach(card => {
+    const productCards = grid.querySelectorAll('.product-card');
+    
+    productCards.forEach(card => {
         card.addEventListener('click', () => {
             const productId = parseInt(card.dataset.productId);
             const product = products.find(p => p.id === productId);
@@ -563,27 +535,33 @@ function showEmptyState() {
 
 // Adicionar ao carrinho
 function addToCart(product) {
-    const existingItem = appState.cart.find(item => item.product_id === product.id);
-    
-    if (existingItem) {
-        if (existingItem.quantity < product.stock_quantity) {
-            existingItem.quantity++;
+    try {
+        const existingItem = appState.cart.find(item => item.product_id === product.id);
+        
+        if (existingItem) {
+            if (existingItem.quantity < product.stock_quantity) {
+                existingItem.quantity++;
+            } else {
+                alert('Quantidade máxima em estoque atingida!');
+                return;
+            }
         } else {
-            alert('Quantidade máxima em estoque atingida!');
-            return;
+            const newItem = {
+                product_id: product.id,
+                name: product.name,
+                sku: product.sku,
+                unit_price: parseFloat(product.price),
+                quantity: 1,
+                stock_quantity: product.stock_quantity
+            };
+            appState.cart.push(newItem);
         }
-    } else {
-        appState.cart.push({
-            product_id: product.id,
-            name: product.name,
-            sku: product.sku,
-            unit_price: product.price,
-            quantity: 1,
-            stock_quantity: product.stock_quantity
-        });
+        
+        updateCartDisplay();
+        
+    } catch (error) {
+        console.error('❌ Erro em addToCart:', error);
     }
-    
-    updateCartDisplay();
 }
 
 // Remover do carrinho
@@ -613,58 +591,66 @@ function updateQuantity(productId, quantity) {
 
 // Atualizar exibição do carrinho
 function updateCartDisplay() {
-    const cartContainer = elements.cartItems;
-    const emptyCart = elements.emptyCart;
-    const itemsCount = elements.cartItemsCount;
-    
-    if (appState.cart.length === 0) {
-        cartContainer.classList.add('hidden');
-        emptyCart.classList.remove('hidden');
-        itemsCount.textContent = '0';
-        elements.processSale.disabled = true;
+    try {
+        const cartContainer = elements.cartItems;
+        const emptyCart = elements.emptyCart;
+        const itemsCount = elements.cartItemsCount;
+        
+        if (appState.cart.length === 0) {
+            cartContainer.classList.add('hidden');
+            emptyCart.classList.remove('hidden');
+            itemsCount.textContent = '0';
+            elements.processSale.disabled = true;
+            updateTotals();
+            return;
+        }
+        
+        emptyCart.classList.add('hidden');
+        cartContainer.classList.remove('hidden');
+        elements.processSale.disabled = false;
+        
+        const totalItems = appState.cart.reduce((sum, item) => sum + item.quantity, 0);
+        itemsCount.textContent = totalItems;
+        
+        const cartHTML = appState.cart.map(item => `
+            <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900 text-sm">${item.name}</h4>
+                        <p class="text-xs text-gray-500">${item.sku}</p>
+                        <p class="text-sm text-green-600 font-medium">R$ ${parseFloat(item.unit_price).toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <button class="text-red-600 hover:text-red-800 text-sm" onclick="removeFromCart(${item.product_id})">
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <button class="w-6 h-6 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400" 
+                                onclick="updateQuantity(${item.product_id}, ${item.quantity - 1})">-</button>
+                        <span class="text-sm font-medium w-8 text-center">${item.quantity}</span>
+                        <button class="w-6 h-6 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400" 
+                                onclick="updateQuantity(${item.product_id}, ${item.quantity + 1})">+</button>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-900">
+                        R$ ${(item.quantity * parseFloat(item.unit_price)).toFixed(2).replace('.', ',')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        cartContainer.innerHTML = cartHTML;
+        
         updateTotals();
-        return;
+        
+    } catch (error) {
+        console.error('❌ Erro em updateCartDisplay:', error);
     }
-    
-    emptyCart.classList.add('hidden');
-    cartContainer.classList.remove('hidden');
-    elements.processSale.disabled = false;
-    
-    itemsCount.textContent = appState.cart.reduce((sum, item) => sum + item.quantity, 0);
-    
-    cartContainer.innerHTML = appState.cart.map(item => `
-        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <div class="flex justify-between items-start mb-2">
-                <div class="flex-1">
-                    <h4 class="font-medium text-gray-900 text-sm">${item.name}</h4>
-                    <p class="text-xs text-gray-500">${item.sku}</p>
-                    <p class="text-sm text-green-600 font-medium">R$ ${item.unit_price.toFixed(2).replace('.', ',')}</p>
-                </div>
-                <button class="text-red-600 hover:text-red-800 text-sm" onclick="removeFromCart(${item.product_id})">
-                    <i class="ti ti-x"></i>
-                </button>
-            </div>
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <button class="w-6 h-6 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400" 
-                            onclick="updateQuantity(${item.product_id}, ${item.quantity - 1})">-</button>
-                    <span class="text-sm font-medium w-8 text-center">${item.quantity}</span>
-                    <button class="w-6 h-6 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400" 
-                            onclick="updateQuantity(${item.product_id}, ${item.quantity + 1})">+</button>
-                </div>
-                <div class="text-sm font-semibold text-gray-900">
-                    R$ ${(item.quantity * item.unit_price).toFixed(2).replace('.', ',')}
-                </div>
-            </div>
-        </div>
-    `).join('');
-    
-    updateTotals();
 }
 
 // Atualizar totais
 function updateTotals() {
-    const subtotal = appState.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const subtotal = appState.cart.reduce((sum, item) => sum + (item.quantity * parseFloat(item.unit_price)), 0);
     const discount = parseFloat(elements.discount.value) || 0;
     const total = Math.max(0, subtotal - discount);
     
@@ -724,14 +710,7 @@ async function processSale() {
             showSuccessModal(result);
             clearCart();
             
-            // Log específico para pagamento parcial
-            if (result.order.is_partial) {
-                console.log('💰 Pagamento parcial processado:', {
-                    total: result.order.total,
-                    pago: result.order.paid_amount,
-                    saldo: result.order.remaining_amount
-                });
-            }
+
         } else {
             alert(result.message || 'Erro ao processar venda');
         }
@@ -790,11 +769,8 @@ async function searchCustomers() {
     const query = document.getElementById('customer-search-input').value.trim();
     const resultsContainer = document.getElementById('customer-search-results');
     
-    console.log('🔍 Iniciando busca de clientes:', query);
-    
     if (!query) {
         resultsContainer.innerHTML = '';
-        console.log('⚠️ Query vazia - limpando resultados');
         return;
     }
     
@@ -810,8 +786,6 @@ async function searchCustomers() {
         const baseUrl = '{{ route('admin.pos.search-customers') }}';
         const searchUrl = `${baseUrl}?q=${encodeURIComponent(query)}`;
         
-        console.log('📡 URL da busca de clientes:', searchUrl);
-        
         const response = await fetch(searchUrl, {
             method: 'GET',
             headers: {
@@ -822,8 +796,6 @@ async function searchCustomers() {
             credentials: 'same-origin'
         });
         
-        console.log('📊 Status da resposta (clientes):', response.status, response.statusText);
-        
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Erro na resposta de clientes:', errorText);
@@ -831,7 +803,6 @@ async function searchCustomers() {
         }
         
         const customers = await response.json();
-        console.log('✅ Clientes recebidos:', customers.length, customers);
         
         if (!Array.isArray(customers)) {
             throw new Error('Resposta inválida: esperado array de clientes');
@@ -874,13 +845,10 @@ async function searchCustomers() {
         resultsContainer.querySelectorAll('.customer-result').forEach(item => {
             item.addEventListener('click', () => {
                 const customer = JSON.parse(item.dataset.customer);
-                console.log('👤 Cliente selecionado:', customer);
                 selectCustomerFromSearch(customer);
                 closeCustomerSearchModal();
             });
         });
-        
-        console.log('✅ Busca de clientes concluída com sucesso');
         
     } catch (error) {
         console.error('❌ Erro na busca de clientes:', error);
@@ -915,8 +883,6 @@ function selectCustomer() {
 }
 
 function selectCustomerFromSearch(customer) {
-    console.log('🎯 Selecionando cliente:', customer);
-    
     appState.selectedCustomer = customer;
     
     // Tentar encontrar o cliente no select principal
@@ -926,7 +892,6 @@ function selectCustomerFromSearch(customer) {
     
     if (selectOption) {
         elements.customerSelect.value = customer.id;
-        console.log('✅ Cliente encontrado no dropdown - selecionado');
     } else {
         // Se não existe no select, criar uma nova opção
         const newOption = new Option(
@@ -936,7 +901,6 @@ function selectCustomerFromSearch(customer) {
         newOption.dataset.customer = JSON.stringify(customer);
         elements.customerSelect.appendChild(newOption);
         elements.customerSelect.value = customer.id;
-        console.log('➕ Cliente adicionado ao dropdown e selecionado');
     }
     
     // Feedback visual
@@ -967,8 +931,6 @@ function closeCustomerSearchModal() {
 function togglePartialPayment() {
     const isPartial = elements.partialPayment.checked;
     
-    console.log('🔄 Pagamento parcial:', isPartial ? 'Ativado' : 'Desativado');
-    
     if (isPartial) {
         elements.partialPaymentSection.classList.remove('hidden');
         elements.partialAmount.focus();
@@ -993,8 +955,6 @@ function set50PercentPayment() {
         const halfAmount = total / 2;
         elements.partialAmount.value = halfAmount.toFixed(2);
         updatePartialPaymentInfo();
-        
-        console.log('💰 Definido 50% do total:', halfAmount.toFixed(2));
     }
 }
 
@@ -1024,7 +984,7 @@ function updatePartialPaymentInfo() {
 }
 
 function calculateFinalTotal() {
-    const subtotal = appState.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const subtotal = appState.cart.reduce((sum, item) => sum + (item.quantity * parseFloat(item.unit_price)), 0);
     const discount = parseFloat(elements.discount.value) || 0;
     return Math.max(0, subtotal - discount);
 }
@@ -1061,119 +1021,7 @@ function debounce(func, wait) {
     };
 }
 
-// Debug Functions
-function updateDebugInfo() {
-    // Update JavaScript status
-    document.getElementById('js-status').textContent = 'Loaded ✅';
-    document.getElementById('js-status').className = 'text-green-600';
-    
-    // Check authentication
-    fetch('{{ route('admin.dashboard') }}', {
-        method: 'GET',
-        headers: {
-            'Accept': 'text/html',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    }).then(response => {
-        const authStatus = document.getElementById('auth-status');
-        if (response.ok) {
-            authStatus.textContent = 'Authenticated ✅';
-            authStatus.className = 'text-green-600';
-        } else {
-            authStatus.textContent = 'Not Authenticated ❌';
-            authStatus.className = 'text-red-600';
-        }
-    }).catch(error => {
-        const authStatus = document.getElementById('auth-status');
-        authStatus.textContent = 'Error checking auth ❌';
-        authStatus.className = 'text-red-600';
-    });
-}
 
-window.testSearchEndpoint = async function() {
-    const resultsDiv = document.getElementById('test-results');
-    resultsDiv.innerHTML = 'Testing search endpoint...';
-    
-    try {
-        const response = await fetch('{{ route('admin.pos.search-products') }}?q=test', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
-            },
-            credentials: 'same-origin'
-        });
-        
-        const data = await response.text();
-        resultsDiv.innerHTML = `<strong>Search Test:</strong> Status ${response.status} - ${response.ok ? '✅' : '❌'}<br>Response: ${data.substring(0, 100)}...`;
-        resultsDiv.className = response.ok ? 'mt-2 text-xs text-green-600' : 'mt-2 text-xs text-red-600';
-    } catch (error) {
-        resultsDiv.innerHTML = `<strong>Search Test:</strong> Error - ${error.message}`;
-        resultsDiv.className = 'mt-2 text-xs text-red-600';
-    }
-}
-
-// Make functions global by attaching to window
-window.testAuthEndpoint = async function() {
-    const resultsDiv = document.getElementById('test-results');
-    resultsDiv.innerHTML = 'Testing authentication...';
-    
-    try {
-        const response = await fetch('{{ route('admin.dashboard') }}', {
-            method: 'GET',
-            headers: {
-                'Accept': 'text/html',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-        
-        resultsDiv.innerHTML = `<strong>Auth Test:</strong> Status ${response.status} - ${response.ok ? 'Authenticated ✅' : 'Not Authenticated ❌'}`;
-        resultsDiv.className = response.ok ? 'mt-2 text-xs text-green-600' : 'mt-2 text-xs text-red-600';
-    } catch (error) {
-        resultsDiv.innerHTML = `<strong>Auth Test:</strong> Error - ${error.message}`;
-        resultsDiv.className = 'mt-2 text-xs text-red-600';
-    }
-}
-
-window.testDebugEndpoint = async function() {
-    const resultsDiv = document.getElementById('test-results');
-    resultsDiv.innerHTML = 'Getting debug information...';
-    
-    try {
-        const response = await fetch('{{ route('admin.pos.debug') }}', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            resultsDiv.innerHTML = `
-                <strong>Debug Info:</strong><br>
-                • Authenticated: ${data.authenticated ? '✅' : '❌'}<br>
-                • User: ${data.user ? data.user.name + ' (' + data.user.email + ')' : 'None'}<br>
-                • Session ID: ${data.session_id}<br>
-                • CSRF Token: ${data.csrf_token ? 'Present' : 'Missing'}<br>
-                • Timestamp: ${data.timestamp}
-            `;
-            resultsDiv.className = 'mt-2 text-xs text-green-600';
-        } else {
-            resultsDiv.innerHTML = `<strong>Debug Test:</strong> Status ${response.status} - Failed ❌`;
-            resultsDiv.className = 'mt-2 text-xs text-red-600';
-        }
-    } catch (error) {
-        resultsDiv.innerHTML = `<strong>Debug Test:</strong> Error - ${error.message}`;
-        resultsDiv.className = 'mt-2 text-xs text-red-600';
-    }
-}
-
-// Initialize debug info when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(updateDebugInfo, 1000); // Wait a bit for page to fully load
-});
 
 
 </script>

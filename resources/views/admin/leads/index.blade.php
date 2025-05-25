@@ -59,7 +59,7 @@
                                 <td>{{ $lead->name }}</td>
                                 <td>{{ $lead->email ?? 'N/A' }}</td>
                                 <td>{{ $lead->phone ?? 'N/A' }}</td>
-                                <td>{{ $lead->company_name ?? 'N/A' }}</td>
+                                <td>{{ $lead->company ?? 'N/A' }}</td>
                                 <td>
                                     <span class="badge badge-{{ $lead->status == 'won' ? 'success' : ($lead->status == 'lost' ? 'danger' : 'primary') }}">
                                         {{ ucfirst($lead->status) }}

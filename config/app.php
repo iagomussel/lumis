@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'lumisERP'),
+    'name' => env('APP_NAME', 'Laravel') === 'Laravel' ? 'lumisERP' : env('APP_NAME', 'lumisERP'),
 
     /*
     |--------------------------------------------------------------------------

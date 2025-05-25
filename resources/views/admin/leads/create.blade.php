@@ -44,9 +44,9 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label for="company_name" class="form-label">Nome da Empresa</label>
-                            <input type="text" name="company_name" id="company_name" class="form-control @error('company_name') is-invalid @enderror" value="{{ old('company_name') }}">
-                            @error('company_name')
+                            <label for="company" class="form-label">Nome da Empresa</label>
+                            <input type="text" name="company" id="company" class="form-control @error('company') is-invalid @enderror" value="{{ old('company') }}">
+                            @error('company')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

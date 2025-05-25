@@ -61,7 +61,7 @@ class LeadController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:leads,email',
             'phone' => 'nullable|string|max:20',
-            'company_name' => 'nullable|string|max:255',
+            'company' => 'nullable|string|max:255',
             'status' => 'required|string|in:new,contacted,qualified,negotiation,won,lost,unqualified', // Adjust based on actual statuses
             'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
@@ -100,7 +100,7 @@ class LeadController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:leads,email,' . $lead->id,
             'phone' => 'nullable|string|max:20',
-            'company_name' => 'nullable|string|max:255',
+            'company' => 'nullable|string|max:255',
             'status' => 'required|string|in:new,contacted,qualified,negotiation,won,lost,unqualified', // Adjust based on actual statuses
             'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
