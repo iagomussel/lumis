@@ -123,10 +123,43 @@
 - **Solução sugerida**:
   - Migrar login/register para layout `ecommerce`
   - Aplicar classe `lumis-hero-gradient` no background
-  - Usar variáveis CSS de branding (`--store-primary`, `--store-secondary`)
-  - Manter header com logo da loja
-  - Consistência com cores: `#2563eb` (primary) e `#7c3aed` (secondary)
-- **Data identificado**: 2025-05-25
+  - Usar variáveis CSS de branding (`--store-primary`, `--store-accent`)
+  - Garantir consistência visual com o e-commerce
+
+### 11. View de Edição de Categorias Não Encontrada
+- **Status**: 🔴 Pendente
+- **Prioridade**: Alta
+- **Descrição**: View `admin.categories.edit` não existe, causando erro 404 ao tentar editar categorias
+- **URL problemática**: `/admin/categories/{id}/edit`
+- **Erro**: `View [admin.categories.edit] not found`
+- **Problema identificado**:
+  - Rota existe e direciona corretamente
+  - Controller provavelmente tem método `edit()`
+  - Falta apenas criar a view `resources/views/admin/categories/edit.blade.php`
+- **Solução necessária**:
+  - Criar view de edição com formulário
+  - Incluir validação frontend
+  - Botões de salvar/cancelar
+  - Interface consistente com outras views admin
+- **Impacto**: Impossível editar categorias via interface web
+
+### 12. Branding Incorreto no Admin Panel
+- **Status**: 🔴 Pendente
+- **Prioridade**: Média
+- **Descrição**: Admin panel mostra "Laravel Sistema ERP" ao invés de "lumisERP"
+- **Problema identificado**:
+  - Header do painel admin usa `config('app.name')` que retorna "Laravel"
+  - Deveria exibir "lumisERP" como nome da aplicação
+  - Inconsistência de branding em todo o sistema
+- **Arquivos relacionados**:
+  - `resources/views/layouts/admin.blade.php` (header superior)
+  - `config/app.php` (configuração do nome da app)
+  - Possivelmente outros layouts que usam `config('app.name')`
+- **Solução necessária**:
+  - Alterar `APP_NAME=Laravel` para `APP_NAME=lumisERP` no `.env`
+  - Ou criar configuração específica de branding
+  - Verificar consistência em todos os layouts
+- **Impacto**: Branding inconsistente e nome incorreto da aplicação
 
 ## 📊 Resumo por Prioridade
 
@@ -157,5 +190,5 @@
 ---
 
 **Última atualização**: 25/05/2025
-**Total de issues**: 10
+**Total de issues**: 12
 **Issues críticas**: 5 

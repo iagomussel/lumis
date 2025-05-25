@@ -148,6 +148,34 @@
                             </li>
 
                             <li class="text-xs font-bold mb-4 mt-6">
+                                <span class="text-xs text-gray-400 font-semibold">FINANCEIRO</span>
+                            </li>
+
+                            <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.financial.receivables') ? 'active' : '' }}"
+                                   href="{{ route('admin.financial.receivables') }}">
+                                    <i class="ti ti-cash ps-2 text-2xl"></i> 
+                                    <span>Contas a Receber</span>
+                                </a>
+                            </li>
+
+                            <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.financial.payables') ? 'active' : '' }}"
+                                   href="{{ route('admin.financial.payables') }}">
+                                    <i class="ti ti-credit-card ps-2 text-2xl"></i> 
+                                    <span>Contas a Pagar</span>
+                                </a>
+                            </li>
+
+                            <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.financial.dashboard') ? 'active' : '' }}"
+                                   href="{{ route('admin.financial.dashboard') }}">
+                                    <i class="ti ti-chart-line ps-2 text-2xl"></i> 
+                                    <span>Dashboard Financeiro</span>
+                                </a>
+                            </li>
+
+                            <li class="text-xs font-bold mb-4 mt-6">
                                 <span class="text-xs text-gray-400 font-semibold">MARKETING</span>
                             </li>
 
