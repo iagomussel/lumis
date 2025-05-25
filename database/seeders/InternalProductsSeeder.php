@@ -16,7 +16,7 @@ class InternalProductsSeeder extends Seeder
     {
         // Get internal categories
         $categories = [
-            'papel_sublimatico' => Category::where('slug', 'papel-sublimatico')->first(),
+            'papel_sublimatico' => Category::where('slug', 'papeis')->first(),
             'tintas' => Category::where('slug', 'tintas-sublimaticas')->first(),
             'blanks_canecas' => Category::where('slug', 'blanks-canecas')->first(),
             'blanks_tecidos' => Category::where('slug', 'blanks-tecidos')->first(),
