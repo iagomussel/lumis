@@ -1,48 +1,8 @@
 version: '3.8'
 
 services:
-  # Laravel Application Service
-  app:
-    build:
-      context: .
-      dockerfile: .cursor/Dockerfile
-      target: development-tools  # Use development-tools stage for full dev environment
-    container_name: lumis_app
-    restart: unless-stopped
-    environment:
-      - APP_ENV=${APP_ENV:-local}
-      - APP_DEBUG=${APP_DEBUG:-true}
-      - APP_KEY=${APP_KEY}
-      - DB_CONNECTION=mysql
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-lumis_erp}
-      - DB_USERNAME=${DB_USERNAME:-lumis}
-      - DB_PASSWORD=${DB_PASSWORD:-root}
-      - CACHE_DRIVER=redis
-      - SESSION_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_HOST=redis
-      - MAIL_MAILER=${MAIL_MAILER:-log}
-    ports:
-      - "${APP_PORT:-8000}:80"
-    volumes:
-      - .:/var/www/html
-      - ./storage/app:/var/www/html/storage/app
-      - ./storage/logs:/var/www/html/storage/logs
-    networks:
-      - lumis_network
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+
+
 
   # MySQL Service
   mysql:
