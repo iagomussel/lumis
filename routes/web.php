@@ -141,6 +141,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Gestão de Promoções
     Route::resource('promotions', PromotionController::class);
     
+    // Logs de Auditoria
+    Route::prefix('activity-logs')->name('activity-logs.')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+        Route::get('/dashboard', [ActivityLogController::class, 'dashboard'])->name('dashboard');
+        Route::get('/export', [ActivityLogController::class, 'export'])->name('export');
+        Route::get('/{activityLog}', [ActivityLogController::class, 'show'])->name('show');
+        Route::delete('/{activityLog}', [ActivityLogController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::post('/cleanup', [ActivityLogController::class, 'cleanup'])->name('cleanup');
+    });
+    
     // Gestão Financeira
     Route::prefix('financial')->name('financial.')->group(function () {
         Route::get('/dashboard', [FinancialController::class, 'dashboard'])->name('dashboard');

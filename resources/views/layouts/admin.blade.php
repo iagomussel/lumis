@@ -202,6 +202,18 @@
                                     <span>Promoções</span>
                                 </a>
                             </li>
+
+                            <li class="text-xs font-bold mb-4 mt-6">
+                                <span class="text-xs text-gray-400 font-semibold">SISTEMA</span>
+                            </li>
+
+                            <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}"
+                                   href="{{ route('admin.activity-logs.index') }}">
+                                    <i class="ti ti-activity ps-2 text-2xl"></i> 
+                                    <span>Logs de Auditoria</span>
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
