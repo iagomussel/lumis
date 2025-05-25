@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\FinancialController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\ProductOptionController;
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EcommerceController;
 use App\Http\Controllers\Auth\CustomerAuthController;
