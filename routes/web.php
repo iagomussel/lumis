@@ -126,6 +126,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     
     // Gestão de Compras
     Route::resource('purchases', PurchaseController::class);
+    Route::patch('purchases/{purchase}/mark-received', [PurchaseController::class, 'markAsReceived'])->name('purchases.mark-received');
     
     // Gestão de Leads
     Route::resource('leads', LeadController::class);
