@@ -137,11 +137,50 @@
                 <div>
                     <label for="payment-method" class="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
                     <select id="payment-method" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                        <option value="cash">Dinheiro</option>
-                        <option value="card">Cartão</option>
+                        <option value="money">Dinheiro</option>
+                        <option value="credit_card">Cartão de Crédito</option>
+                        <option value="debit_card">Cartão de Débito</option>
                         <option value="pix">PIX</option>
                         <option value="bank_transfer">Transferência</option>
+                        <option value="bank_slip">Boleto</option>
+                        <option value="check">Cheque</option>
                     </select>
+                </div>
+
+                <!-- Opção de Pagamento Parcial -->
+                <div>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="partial-payment" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm font-medium text-gray-700">Pagamento Parcial (Sinal)</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1">Cliente paga apenas parte do valor agora</p>
+                </div>
+
+                <!-- Valor do Sinal (aparece quando checkbox marcado) -->
+                <div id="partial-payment-section" class="hidden">
+                    <label for="partial-amount" class="block text-sm font-medium text-gray-700 mb-1">Valor do Sinal (R$)</label>
+                    <div class="flex space-x-2">
+                        <input 
+                            type="number" 
+                            id="partial-amount" 
+                            step="0.01" 
+                            min="0"
+                            placeholder="0,00"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <button type="button" id="set-50-percent" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
+                            50%
+                        </button>
+                    </div>
+                    <div id="remaining-info" class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800 hidden">
+                        <div class="flex justify-between">
+                            <span>Sinal:</span>
+                            <span id="down-payment-display">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Restante para entrega:</span>
+                            <span id="remaining-display">R$ 0,00</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Observações -->
@@ -250,54 +289,166 @@ const elements = {
     notes: document.getElementById('notes'),
     customerSelect: document.getElementById('customer-select'),
     processSale: document.getElementById('process-sale'),
-    clearCart: document.getElementById('clear-cart')
+    clearCart: document.getElementById('clear-cart'),
+    partialPayment: document.getElementById('partial-payment'),
+    partialPaymentSection: document.getElementById('partial-payment-section'),
+    partialAmount: document.getElementById('partial-amount'),
+    set50Percent: document.getElementById('set-50-percent'),
+    remainingInfo: document.getElementById('remaining-info'),
+    downPaymentDisplay: document.getElementById('down-payment-display'),
+    remainingDisplay: document.getElementById('remaining-display')
 };
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado - Inicializando PDV');
+    
+    // Verificar se todos os elementos essenciais existem
+    const requiredElements = ['product-search', 'products-grid', 'empty-state', 'cart-items', 'empty-cart'];
+    for (const elementId of requiredElements) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.error(`Elemento obrigatório não encontrado: ${elementId}`);
+            return;
+        }
+    }
+    
+    console.log('Todos os elementos encontrados - Inicializando listeners');
     initializeEventListeners();
     updateCartDisplay();
+    
+    // Foco inicial no campo de busca
+    if (elements.productSearch) {
+        elements.productSearch.focus();
+    }
+    
+    console.log('PDV inicializado com sucesso');
 });
 
 // Event Listeners
 function initializeEventListeners() {
+    // Verificar se todos os elementos existem
+    if (!elements.productSearch) {
+        console.error('Elemento product-search não encontrado');
+        return;
+    }
+
     // Busca de produtos
     elements.productSearch.addEventListener('input', debounce(searchProducts, 300));
     
+    // Limpar busca
+    const clearSearchBtn = document.getElementById('clear-search');
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            elements.productSearch.value = '';
+            showEmptyState();
+        });
+    }
+    
     // Carrinho
-    elements.clearCart.addEventListener('click', clearCart);
-    elements.processSale.addEventListener('click', processSale);
-    elements.discount.addEventListener('input', updateTotals);
+    if (elements.clearCart) elements.clearCart.addEventListener('click', clearCart);
+    if (elements.processSale) elements.processSale.addEventListener('click', processSale);
+    if (elements.discount) elements.discount.addEventListener('input', updateTotals);
+    
+    // Pagamento parcial
+    if (elements.partialPayment) elements.partialPayment.addEventListener('change', togglePartialPayment);
+    if (elements.partialAmount) elements.partialAmount.addEventListener('input', updatePartialPaymentInfo);
+    if (elements.set50Percent) elements.set50Percent.addEventListener('click', set50PercentPayment);
     
     // Cliente
-    elements.customerSelect.addEventListener('change', selectCustomer);
-    document.getElementById('search-customer').addEventListener('click', openCustomerSearchModal);
+    if (elements.customerSelect) elements.customerSelect.addEventListener('change', selectCustomer);
+    
+    const searchCustomerBtn = document.getElementById('search-customer');
+    if (searchCustomerBtn) searchCustomerBtn.addEventListener('click', openCustomerSearchModal);
     
     // Modals
-    document.getElementById('close-customer-modal').addEventListener('click', closeCustomerSearchModal);
-    document.getElementById('customer-search-input').addEventListener('input', debounce(searchCustomers, 300));
-    document.getElementById('new-sale').addEventListener('click', startNewSale);
-    document.getElementById('print-receipt').addEventListener('click', printReceipt);
+    const closeCustomerModalBtn = document.getElementById('close-customer-modal');
+    if (closeCustomerModalBtn) closeCustomerModalBtn.addEventListener('click', closeCustomerSearchModal);
+    
+    const customerSearchInput = document.getElementById('customer-search-input');
+    if (customerSearchInput) customerSearchInput.addEventListener('input', debounce(searchCustomers, 300));
+    
+    const newSaleBtn = document.getElementById('new-sale');
+    if (newSaleBtn) newSaleBtn.addEventListener('click', startNewSale);
+    
+    const printReceiptBtn = document.getElementById('print-receipt');
+    if (printReceiptBtn) printReceiptBtn.addEventListener('click', printReceipt);
 }
 
-// Busca de produtos
+// Busca de produtos - Versão simplificada e robusta
 async function searchProducts() {
     const query = elements.productSearch.value.trim();
+    
+    console.log('🔍 Iniciando busca:', query);
     
     if (!query) {
         showEmptyState();
         return;
     }
 
+    // Mostrar loading
+    elements.productsGrid.innerHTML = `
+        <div class="col-span-full text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-500">Buscando produtos...</p>
+        </div>
+    `;
+    elements.emptyState.classList.add('hidden');
+    elements.productsGrid.classList.remove('hidden');
+
     try {
-        const response = await fetch(`{{ route('admin.pos.search-products') }}?q=${encodeURIComponent(query)}`);
+        // Construir URL
+        const baseUrl = '{{ route('admin.pos.search-products') }}';
+        const searchUrl = `${baseUrl}?q=${encodeURIComponent(query)}`;
+        
+        console.log('📡 URL da requisição:', searchUrl);
+        
+        // Fazer requisição
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('📊 Status da resposta:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erro na resposta:', errorText);
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
         const products = await response.json();
+        console.log('✅ Produtos recebidos:', products.length, products);
+        
+        if (!Array.isArray(products)) {
+            throw new Error('Resposta inválida: esperado array de produtos');
+        }
         
         appState.products = products;
         displayProducts(products);
+        
     } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
-        showEmptyState();
+        console.error('❌ Erro na busca:', error);
+        
+        elements.productsGrid.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <div class="text-red-500 mb-4">
+                    <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-red-600 mb-2">Erro na busca</h3>
+                <p class="text-red-500 mb-4">${error.message}</p>
+                <button onclick="searchProducts()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                    🔄 Tentar novamente
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -477,12 +628,28 @@ async function processSale() {
         return;
     }
     
+    // Validar pagamento parcial
+    const partialPaymentData = getPartialPaymentData();
+    
+    if (partialPaymentData && partialPaymentData.paidAmount > partialPaymentData.totalAmount) {
+        alert('O valor do sinal não pode ser maior que o total!');
+        elements.partialAmount.focus();
+        return;
+    }
+    
+    if (partialPaymentData && partialPaymentData.paidAmount <= 0) {
+        alert('O valor do sinal deve ser maior que zero!');
+        elements.partialAmount.focus();
+        return;
+    }
+    
     const data = {
         customer_id: appState.selectedCustomer?.id || null,
         items: appState.cart,
         payment_method: elements.paymentMethod.value,
         discount: parseFloat(elements.discount.value) || 0,
-        notes: elements.notes.value.trim()
+        notes: elements.notes.value.trim(),
+        partial_payment: partialPaymentData
     };
     
     elements.processSale.disabled = true;
@@ -504,6 +671,15 @@ async function processSale() {
             appState.lastOrderId = result.order.id;
             showSuccessModal(result);
             clearCart();
+            
+            // Log específico para pagamento parcial
+            if (result.order.is_partial) {
+                console.log('💰 Pagamento parcial processado:', {
+                    total: result.order.total,
+                    pago: result.order.paid_amount,
+                    saldo: result.order.remaining_amount
+                });
+            }
         } else {
             alert(result.message || 'Erro ao processar venda');
         }
@@ -523,6 +699,15 @@ function clearCart() {
     elements.customerSelect.value = '';
     elements.discount.value = '';
     elements.notes.value = '';
+    
+    // Limpar pagamento parcial
+    elements.partialPayment.checked = false;
+    elements.partialAmount.value = '';
+    elements.partialPaymentSection.classList.add('hidden');
+    elements.remainingInfo.classList.add('hidden');
+    elements.partialAmount.style.borderColor = '';
+    elements.partialAmount.style.backgroundColor = '';
+    
     updateCartDisplay();
 }
 
@@ -548,26 +733,88 @@ function printReceipt() {
     }
 }
 
-// Busca de clientes
+// Busca de clientes - Versão robusta com debug
 async function searchCustomers() {
     const query = document.getElementById('customer-search-input').value.trim();
     const resultsContainer = document.getElementById('customer-search-results');
     
+    console.log('🔍 Iniciando busca de clientes:', query);
+    
     if (!query) {
         resultsContainer.innerHTML = '';
+        console.log('⚠️ Query vazia - limpando resultados');
         return;
     }
     
+    // Mostrar loading
+    resultsContainer.innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+            <p class="text-gray-500 text-sm">Buscando clientes...</p>
+        </div>
+    `;
+    
     try {
-        const response = await fetch(`{{ route('admin.pos.search-customers') }}?q=${encodeURIComponent(query)}`);
+        const baseUrl = '{{ route('admin.pos.search-customers') }}';
+        const searchUrl = `${baseUrl}?q=${encodeURIComponent(query)}`;
+        
+        console.log('📡 URL da busca de clientes:', searchUrl);
+        
+        const response = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('📊 Status da resposta (clientes):', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erro na resposta de clientes:', errorText);
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
         const customers = await response.json();
+        console.log('✅ Clientes recebidos:', customers.length, customers);
+        
+        if (!Array.isArray(customers)) {
+            throw new Error('Resposta inválida: esperado array de clientes');
+        }
+        
+        if (customers.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-gray-400 mb-3">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-500 text-sm font-medium">Nenhum cliente encontrado</p>
+                    <p class="text-gray-400 text-xs">Tente buscar com outros termos</p>
+                </div>
+            `;
+            return;
+        }
         
         resultsContainer.innerHTML = customers.map(customer => `
-            <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 customer-result" 
+            <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 customer-result transition-colors" 
                  data-customer='${JSON.stringify(customer)}'>
-                <div class="font-medium text-gray-900">${customer.name}</div>
-                <div class="text-sm text-gray-500">${customer.document}</div>
-                <div class="text-xs text-gray-400">${customer.email}</div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">${customer.name}</div>
+                        <div class="text-sm text-gray-500">${customer.document || 'Sem documento'}</div>
+                        <div class="text-xs text-gray-400">${customer.email || 'Sem email'}</div>
+                    </div>
+                </div>
             </div>
         `).join('');
         
@@ -575,12 +822,31 @@ async function searchCustomers() {
         resultsContainer.querySelectorAll('.customer-result').forEach(item => {
             item.addEventListener('click', () => {
                 const customer = JSON.parse(item.dataset.customer);
+                console.log('👤 Cliente selecionado:', customer);
                 selectCustomerFromSearch(customer);
                 closeCustomerSearchModal();
             });
         });
+        
+        console.log('✅ Busca de clientes concluída com sucesso');
+        
     } catch (error) {
-        console.error('Erro ao buscar clientes:', error);
+        console.error('❌ Erro na busca de clientes:', error);
+        
+        resultsContainer.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-red-500 mb-3">
+                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-medium text-red-600 mb-2">Erro na busca</h3>
+                <p class="text-red-500 text-xs mb-3">${error.message}</p>
+                <button onclick="searchCustomers()" class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors">
+                    🔄 Tentar novamente
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -597,8 +863,38 @@ function selectCustomer() {
 }
 
 function selectCustomerFromSearch(customer) {
+    console.log('🎯 Selecionando cliente:', customer);
+    
     appState.selectedCustomer = customer;
-    elements.customerSelect.value = customer.id;
+    
+    // Tentar encontrar o cliente no select principal
+    const selectOption = Array.from(elements.customerSelect.options).find(option => 
+        option.value == customer.id
+    );
+    
+    if (selectOption) {
+        elements.customerSelect.value = customer.id;
+        console.log('✅ Cliente encontrado no dropdown - selecionado');
+    } else {
+        // Se não existe no select, criar uma nova opção
+        const newOption = new Option(
+            `${customer.name} (${customer.document || 'Sem documento'})`,
+            customer.id
+        );
+        newOption.dataset.customer = JSON.stringify(customer);
+        elements.customerSelect.appendChild(newOption);
+        elements.customerSelect.value = customer.id;
+        console.log('➕ Cliente adicionado ao dropdown e selecionado');
+    }
+    
+    // Feedback visual
+    elements.customerSelect.style.borderColor = '#10b981';
+    elements.customerSelect.style.backgroundColor = '#f0fdf4';
+    
+    setTimeout(() => {
+        elements.customerSelect.style.borderColor = '';
+        elements.customerSelect.style.backgroundColor = '';
+    }, 2000);
 }
 
 // Modals de cliente
@@ -615,6 +911,91 @@ function closeCustomerSearchModal() {
     document.getElementById('customer-search-results').innerHTML = '';
 }
 
+// Funções de Pagamento Parcial
+function togglePartialPayment() {
+    const isPartial = elements.partialPayment.checked;
+    
+    console.log('🔄 Pagamento parcial:', isPartial ? 'Ativado' : 'Desativado');
+    
+    if (isPartial) {
+        elements.partialPaymentSection.classList.remove('hidden');
+        elements.partialAmount.focus();
+        
+        // Sugerir 50% como padrão
+        const total = calculateFinalTotal();
+        if (total > 0) {
+            const halfAmount = total / 2;
+            elements.partialAmount.value = halfAmount.toFixed(2);
+            updatePartialPaymentInfo();
+        }
+    } else {
+        elements.partialPaymentSection.classList.add('hidden');
+        elements.remainingInfo.classList.add('hidden');
+        elements.partialAmount.value = '';
+    }
+}
+
+function set50PercentPayment() {
+    const total = calculateFinalTotal();
+    if (total > 0) {
+        const halfAmount = total / 2;
+        elements.partialAmount.value = halfAmount.toFixed(2);
+        updatePartialPaymentInfo();
+        
+        console.log('💰 Definido 50% do total:', halfAmount.toFixed(2));
+    }
+}
+
+function updatePartialPaymentInfo() {
+    const partialAmount = parseFloat(elements.partialAmount.value) || 0;
+    const total = calculateFinalTotal();
+    const remaining = Math.max(0, total - partialAmount);
+    
+    if (partialAmount > 0 && partialAmount <= total) {
+        elements.remainingInfo.classList.remove('hidden');
+        elements.downPaymentDisplay.textContent = `R$ ${partialAmount.toFixed(2).replace('.', ',')}`;
+        elements.remainingDisplay.textContent = `R$ ${remaining.toFixed(2).replace('.', ',')}`;
+        
+        // Validação visual
+        if (partialAmount > total) {
+            elements.partialAmount.style.borderColor = '#ef4444';
+            elements.partialAmount.style.backgroundColor = '#fef2f2';
+        } else {
+            elements.partialAmount.style.borderColor = '#10b981';
+            elements.partialAmount.style.backgroundColor = '#f0fdf4';
+        }
+    } else {
+        elements.remainingInfo.classList.add('hidden');
+        elements.partialAmount.style.borderColor = '';
+        elements.partialAmount.style.backgroundColor = '';
+    }
+}
+
+function calculateFinalTotal() {
+    const subtotal = appState.cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const discount = parseFloat(elements.discount.value) || 0;
+    return Math.max(0, subtotal - discount);
+}
+
+function isPartialPayment() {
+    return elements.partialPayment.checked && parseFloat(elements.partialAmount.value) > 0;
+}
+
+function getPartialPaymentData() {
+    if (!isPartialPayment()) return null;
+    
+    const partialAmount = parseFloat(elements.partialAmount.value) || 0;
+    const total = calculateFinalTotal();
+    const remaining = Math.max(0, total - partialAmount);
+    
+    return {
+        isPartial: true,
+        paidAmount: partialAmount,
+        remainingAmount: remaining,
+        totalAmount: total
+    };
+}
+
 // Utilitários
 function debounce(func, wait) {
     let timeout;
@@ -628,11 +1009,7 @@ function debounce(func, wait) {
     };
 }
 
-// Limpar busca
-document.getElementById('clear-search').addEventListener('click', () => {
-    elements.productSearch.value = '';
-    showEmptyState();
-});
+
 </script>
 @endpush
 @endsection 

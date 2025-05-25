@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\AccountReceivable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -92,9 +93,14 @@ class POSController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,card,pix,bank_transfer',
+            'payment_method' => 'required|in:money,credit_card,debit_card,pix,bank_transfer,bank_slip,check',
             'discount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',
+            'partial_payment' => 'nullable|array',
+            'partial_payment.isPartial' => 'boolean',
+            'partial_payment.paidAmount' => 'nullable|numeric|min:0',
+            'partial_payment.remainingAmount' => 'nullable|numeric|min:0',
+            'partial_payment.totalAmount' => 'nullable|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -117,6 +123,21 @@ class POSController extends Controller
             $discount = $request->discount ?? 0;
             $total = $subtotal - $discount;
 
+            // Verificar dados do pagamento parcial
+            $partialPayment = $request->partial_payment;
+            $isPartialPayment = $partialPayment && $partialPayment['isPartial'] ?? false;
+            
+            // Validar pagamento parcial
+            if ($isPartialPayment) {
+                $paidAmount = $partialPayment['paidAmount'] ?? 0;
+                if ($paidAmount <= 0 || $paidAmount > $total) {
+                    throw new \Exception("Valor do sinal inválido. Deve ser entre R$ 0,01 e R$ " . number_format($total, 2, ',', '.'));
+                }
+            }
+
+            // Definir status do pagamento
+            $paymentStatus = $isPartialPayment ? 'partially_paid' : 'paid';
+
             // Criar pedido
             $order = Order::create([
                 'customer_id' => $request->customer_id,
@@ -128,7 +149,7 @@ class POSController extends Controller
                 'shipping' => 0,
                 'total' => $total,
                 'payment_method' => $request->payment_method,
-                'payment_status' => 'paid',
+                'payment_status' => $paymentStatus,
                 'notes' => $request->notes,
             ]);
 
@@ -150,7 +171,27 @@ class POSController extends Controller
                 $product->decrement('stock_quantity', $item['quantity']);
             }
 
+            // Se é pagamento parcial, criar conta a receber
+            if ($isPartialPayment && $request->customer_id) {
+                $paidAmount = $partialPayment['paidAmount'];
+                $remainingAmount = $total - $paidAmount;
+
+                \App\Models\AccountReceivable::create([
+                    'customer_id' => $request->customer_id,
+                    'order_id' => $order->id,
+                    'description' => "Saldo - Pedido {$order->order_number}",
+                    'amount' => $remainingAmount,
+                    'paid_amount' => 0,
+                    'due_date' => now()->addDays(30), // 30 dias para pagamento
+                    'status' => 'pending',
+                ]);
+            }
+
             DB::commit();
+
+            $responseMessage = $isPartialPayment 
+                ? "Venda realizada! Sinal recebido: R$ " . number_format($partialPayment['paidAmount'], 2, ',', '.') . ". Saldo para entrega: R$ " . number_format($total - $partialPayment['paidAmount'], 2, ',', '.')
+                : 'Venda realizada com sucesso!';
 
             return response()->json([
                 'success' => true,
@@ -159,8 +200,12 @@ class POSController extends Controller
                     'order_number' => $order->order_number,
                     'total' => $order->total,
                     'formatted_total' => $order->formatted_total,
+                    'payment_status' => $paymentStatus,
+                    'is_partial' => $isPartialPayment,
+                    'paid_amount' => $isPartialPayment ? $partialPayment['paidAmount'] : $total,
+                    'remaining_amount' => $isPartialPayment ? ($total - $partialPayment['paidAmount']) : 0,
                 ],
-                'message' => 'Venda realizada com sucesso!'
+                'message' => $responseMessage
             ]);
 
         } catch (\Exception $e) {

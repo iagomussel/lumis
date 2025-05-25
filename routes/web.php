@@ -95,6 +95,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // PDV (Ponto de Venda)
     Route::prefix('pos')->name('pos.')->group(function () {
         Route::get('/', [POSController::class, 'index'])->name('index');
+        Route::get('/test', function() { return view('admin.pos.test'); })->name('test');
+        Route::get('/test-customers', function() { return view('admin.pos.test-customers'); })->name('test-customers');
         Route::get('/search-products', [POSController::class, 'searchProducts'])->name('search-products');
         Route::get('/search-customers', [POSController::class, 'searchCustomers'])->name('search-customers');
         Route::get('/product/{product}', [POSController::class, 'getProduct'])->name('get-product');
