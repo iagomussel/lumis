@@ -36,24 +36,40 @@
             </div>
         </div>
 
-        <div id="main-wrapper" class="flex p-5 xl:pr-0">
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-toggle" class="xl:hidden fixed top-20 left-4 z-50 bg-white p-3 rounded-full shadow-lg border border-gray-200">
+            <i class="ti ti-menu-2 text-xl text-gray-700"></i>
+        </button>
+
+        <!-- Mobile Overlay -->
+        <div id="mobile-overlay" class="xl:hidden fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+        <div id="main-wrapper" class="flex xl:p-5 xl:pr-0">
             <aside id="application-sidebar-brand"
-                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-[90px] xl:left-auto top-0 left-0 with-vertical h-screen z-[999] shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300">
+                class="hs-overlay hs-overlay-open:translate-x-0 -translate-x-full transform hidden xl:block xl:translate-x-0 xl:end-auto xl:bottom-0 fixed xl:top-[90px] xl:left-auto top-0 left-0 with-vertical h-screen z-45 shrink-0 w-[270px] shadow-md xl:rounded-md rounded-none bg-white left-sidebar transition-all duration-300 flex flex-col">
                 
-                <div class="p-4">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center mr-3">
-                            <i class="ti ti-building-store text-white text-lg"></i>
+                <!-- Sidebar Header -->
+                <div class="p-4 border-b border-gray-100 flex-shrink-0">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center mr-3">
+                                <i class="ti ti-building-store text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-gray-500 font-semibold text-sm">{{ config('app.name') }}</h3>
+                                <p class="text-gray-400 text-xs">ERP System</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-gray-500 font-semibold text-sm">{{ config('app.name') }}</h3>
-                            <p class="text-gray-400 text-xs">ERP System</p>
-                        </div>
+                        <!-- Close button for mobile -->
+                        <button id="mobile-menu-close" class="xl:hidden p-2 rounded-md hover:bg-gray-100 transition-colors">
+                            <i class="ti ti-x text-lg text-gray-500"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div class="scroll-sidebar" data-simplebar="">
-                    <nav class="w-full flex flex-col sidebar-nav px-4 mt-5">
+                <!-- Scrollable Navigation -->
+                <div class="flex-1 overflow-y-auto scrollbar-thin">
+                    <nav class="w-full flex flex-col sidebar-nav p-4">
                         <ul id="sidebarnav" class="text-gray-600 text-sm">
                             <li class="text-xs font-bold pb-[5px]">
                                 <span class="text-xs text-gray-400 font-semibold">DASHBOARD</span>
@@ -154,6 +170,18 @@
                             </li>
 
                             <li class="text-xs font-bold mb-4 mt-6">
+                                <span class="text-xs text-gray-400 font-semibold">ENTREGAS</span>
+                            </li>
+
+                            <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.deliveries.*') ? 'active' : '' }}"
+                                   href="{{ route('admin.deliveries.index') }}">
+                                    <i class="ti ti-truck-delivery ps-2 text-2xl"></i> 
+                                    <span>Agendamentos</span>
+                                </a>
+                            </li>
+
+                            <li class="text-xs font-bold mb-4 mt-6">
                                 <span class="text-xs text-gray-400 font-semibold">COMPRAS</span>
                             </li>
 
@@ -218,6 +246,14 @@
                             </li>
 
                             <li class="sidebar-item">
+                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.search') ? 'active' : '' }}"
+                                   href="{{ route('admin.search') }}">
+                                    <i class="ti ti-search ps-2 text-2xl"></i> 
+                                    <span>Busca Global</span>
+                                </a>
+                            </li>
+
+                            <li class="sidebar-item">
                                 <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}"
                                    href="{{ route('admin.activity-logs.index') }}">
                                     <i class="ti ti-activity ps-2 text-2xl"></i> 
@@ -225,11 +261,13 @@
                                 </a>
                             </li>
                         </ul>
+                        <!-- Bottom padding to ensure last items are accessible -->
+                        <div class="h-8"></div>
                     </nav>
                 </div>
             </aside>
 
-            <div class="w-full page-wrapper xl:px-6 px-0">
+            <div class="w-full page-wrapper xl:px-6 px-4">
                 <main class="h-full max-w-full">
                     <div class="container full-container p-0 flex flex-col gap-6">
                         <header class="bg-white shadow-md rounded-md w-full text-sm py-4 px-6">
@@ -342,17 +380,224 @@
             color: #006aaf;
         }
         
+        /* Desktop layout */
         .page-wrapper {
             margin-left: 270px;
         }
         
+        /* Sidebar scrollbar styling */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 3px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Mobile sidebar animations */
+        .sidebar-open {
+            transform: translateX(0) !important;
+            display: block !important;
+        }
+        
+        /* Z-index hierarchy */
+        .app-topstrip {
+            z-index: 30;
+        }
+        
+        #mobile-menu-toggle {
+            z-index: 50;
+        }
+        
+        #mobile-overlay {
+            z-index: 40;
+        }
+        
+        #application-sidebar-brand {
+            z-index: 45;
+        }
+        
+        /* Mobile responsive design */
         @media (max-width: 1280px) {
             .page-wrapper {
                 margin-left: 0;
+            }
+            
+            #main-wrapper {
+                padding: 1rem;
+            }
+            
+            #application-sidebar-brand {
+                top: 0 !important;
+                height: 100vh !important;
+                display: none;
+            }
+            
+            .mobile-menu-open #application-sidebar-brand {
+                display: flex !important;
+                transform: translateX(0);
+            }
+            
+            .mobile-menu-open #mobile-overlay {
+                display: block !important;
+            }
+            
+            /* Improve mobile header */
+            .app-topstrip {
+                padding: 1rem 1.5rem;
+            }
+        }
+        
+        /* Improve touch targets on mobile */
+        @media (max-width: 768px) {
+            .sidebar-link {
+                padding: 0.875rem 0.75rem !important;
+                margin: 0.125rem 0 !important;
+                font-size: 0.9rem !important;
+            }
+            
+            .sidebar-link i {
+                font-size: 1.375rem !important;
+                margin-right: 0.75rem !important;
+            }
+            
+            .sidebar-item .text-xs {
+                font-size: 0.75rem !important;
+                margin: 1rem 0 0.5rem 0 !important;
+            }
+            
+            #main-wrapper {
+                padding: 0.5rem;
+            }
+            
+            .page-wrapper {
+                padding: 0 !important;
+            }
+        }
+        
+        /* Tablet specific adjustments */
+        @media (min-width: 769px) and (max-width: 1279px) {
+            #main-wrapper {
+                padding: 1.5rem;
             }
         }
     </style>
     
     @stack('scripts')
+    
+    <!-- Mobile Menu JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+            const mobileOverlay = document.getElementById('mobile-overlay');
+            const sidebar = document.getElementById('application-sidebar-brand');
+            const body = document.body;
+            
+            function openMobileMenu() {
+                console.log('Opening mobile menu');
+                body.classList.add('mobile-menu-open');
+                sidebar.classList.add('sidebar-open');
+                mobileOverlay.classList.remove('hidden');
+                // Prevent body scroll when menu is open
+                body.style.overflow = 'hidden';
+                // Force sidebar to show
+                sidebar.style.display = 'flex';
+                sidebar.style.transform = 'translateX(0)';
+            }
+            
+            function closeMobileMenu() {
+                console.log('Closing mobile menu');
+                body.classList.remove('mobile-menu-open');
+                sidebar.classList.remove('sidebar-open');
+                mobileOverlay.classList.add('hidden');
+                // Restore body scroll
+                body.style.overflow = '';
+                // Hide sidebar on mobile
+                if (window.innerWidth < 1280) {
+                    sidebar.style.display = 'none';
+                    sidebar.style.transform = 'translateX(-100%)';
+                }
+            }
+            
+            function handleResize() {
+                if (window.innerWidth >= 1280) {
+                    // Desktop mode
+                    closeMobileMenu();
+                    sidebar.style.display = 'flex';
+                    sidebar.style.transform = 'translateX(0)';
+                } else {
+                    // Mobile mode
+                    if (!body.classList.contains('mobile-menu-open')) {
+                        sidebar.style.display = 'none';
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                }
+            }
+            
+            // Initial setup
+            handleResize();
+            
+            // Toggle menu on button click
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openMobileMenu();
+                });
+            }
+            
+            // Close menu on close button click
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMobileMenu();
+                });
+            }
+            
+            // Close menu on overlay click
+            if (mobileOverlay) {
+                mobileOverlay.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMobileMenu();
+                });
+            }
+            
+            // Close menu on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && body.classList.contains('mobile-menu-open')) {
+                    closeMobileMenu();
+                }
+            });
+            
+            // Close menu when clicking on a link (for mobile navigation)
+            if (sidebar) {
+                const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        // Only close on mobile
+                        if (window.innerWidth < 1280) {
+                            setTimeout(closeMobileMenu, 150); // Small delay for better UX
+                        }
+                    });
+                });
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', handleResize);
+        });
+    </script>
 </body>
 </html> 

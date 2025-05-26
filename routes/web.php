@@ -93,16 +93,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('product-variants', ProductVariantController::class);
     Route::post('product-variants/{productVariant}/toggle-status', [ProductVariantController::class, 'toggleStatus'])->name('product-variants.toggle-status');
     Route::post('product-variants/bulk-update-inventory', [ProductVariantController::class, 'bulkUpdateInventory'])->name('product-variants.bulk-update-inventory');
-    Route::get('products/{product}/variant-options', [ProductVariantController::class, 'getProductVariantOptions'])->name('products.variant-options');
-    Route::post('products/{product}/generate-combinations', [ProductVariantController::class, 'generateCombinations'])->name('products.generate-combinations');
-    
-    // Gestão de Opções de Variações
-    Route::resource('product-variant-options', ProductVariantOptionController::class);
-    Route::post('product-variant-options/{productVariantOption}/toggle-status', [ProductVariantOptionController::class, 'toggleStatus'])->name('product-variant-options.toggle-status');
-    Route::post('product-variant-options/reorder', [ProductVariantOptionController::class, 'reorder'])->name('product-variant-options.reorder');
-    Route::get('product-variant-options/{productVariantOption}/values', [ProductVariantOptionController::class, 'getValues'])->name('product-variant-options.values');
-    Route::post('product-variant-options/{productVariantOption}/add-value', [ProductVariantOptionController::class, 'addValue'])->name('product-variant-options.add-value');
-    Route::delete('product-variant-options/{productVariantOption}/values/{value}', [ProductVariantOptionController::class, 'removeValue'])->name('product-variant-options.remove-value');
     
     // Gestão de Clientes
     Route::resource('customers', CustomerController::class);
@@ -194,7 +184,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         
         // Contas a Pagar
         Route::get('/payables', [FinancialController::class, 'payables'])->name('payables');
-        Route::post('/payables/{payable}/pay', [FinancialController::class, 'payPayable'])->name('payables.pay');
+        Route::get('/payables/create', [FinancialController::class, 'createPayable'])->name('payables.create');
+        Route::post('/payables', [FinancialController::class, 'storePayable'])->name('payables.store');
+        Route::get('/payables/{payable}', [FinancialController::class, 'showPayable'])->name('payables.show');
+        Route::get('/payables/{payable}/edit', [FinancialController::class, 'editPayable'])->name('payables.edit');
+        Route::patch('/payables/{payable}', [FinancialController::class, 'updatePayable'])->name('payables.update');
+        Route::delete('/payables/{payable}', [FinancialController::class, 'destroyPayable'])->name('payables.destroy');
+        Route::patch('/payables/{payable}/pay', [FinancialController::class, 'payPayable'])->name('payables.pay');
         
         // Fluxo de Caixa
         Route::get('/cash-flow', [FinancialController::class, 'cashFlow'])->name('cash-flow');

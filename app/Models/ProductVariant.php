@@ -14,49 +14,26 @@ class ProductVariant extends Model
 
     protected $fillable = [
         'product_id',
+        'name',
         'sku',
         'barcode',
-        'title',
-        'price',
-        'compare_at_price',
-        'cost_price',
-        'inventory_quantity',
-        'track_inventory',
-        'continue_selling_when_out_of_stock',
-        'inventory_policy',
-        'fulfillment_service',
-        'weight',
-        'length',
-        'width',
-        'height',
-        'requires_shipping',
-        'taxable',
-        'is_active',
-        'position',
-        'meta_title',
-        'meta_description',
-        'image_ids',
-        'featured_image',
         'option_values',
-        'metafields',
+        'price_adjustment',
+        'cost_adjustment',
+        'stock_quantity',
+        'min_stock',
+        'weight_adjustment',
+        'active',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'compare_at_price' => 'decimal:2',
-        'cost_price' => 'decimal:2',
-        'weight' => 'decimal:3',
-        'length' => 'decimal:2',
-        'width' => 'decimal:2',
-        'height' => 'decimal:2',
-        'track_inventory' => 'boolean',
-        'continue_selling_when_out_of_stock' => 'boolean',
-        'requires_shipping' => 'boolean',
-        'taxable' => 'boolean',
-        'is_active' => 'boolean',
-        'image_ids' => 'array',
         'option_values' => 'array',
-        'metafields' => 'array',
+        'price_adjustment' => 'decimal:2',
+        'cost_adjustment' => 'decimal:2',
+        'weight_adjustment' => 'decimal:3',
+        'stock_quantity' => 'integer',
+        'min_stock' => 'integer',
+        'active' => 'boolean',
     ];
 
     // Relacionamentos
@@ -78,7 +55,7 @@ class ProductVariant extends Model
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('active', true);
     }
 
     public function scopeLowStock($query)
@@ -192,7 +169,7 @@ class ProductVariant extends Model
 
     public function getCanBePurchasedAttribute()
     {
-        if (!$this->is_active || !$this->product->is_active) {
+        if (!$this->active || !$this->product->active) {
             return false;
         }
 
@@ -319,7 +296,7 @@ class ProductVariant extends Model
             'weight' => $product->weight,
             'requires_shipping' => true,
             'taxable' => true,
-            'is_active' => true,
+            'active' => true,
             'option_values' => $optionValues,
         ], $overrides);
 

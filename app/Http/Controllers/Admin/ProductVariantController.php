@@ -41,9 +41,9 @@ class ProductVariantController extends Controller
         // Filter by status
         if ($request->filled('status')) {
             if ($request->status === 'active') {
-                $query->where('is_active', true);
+                $query->where('active', true);
             } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
+                $query->where('active', false);
             }
         }
 
@@ -68,9 +68,9 @@ class ProductVariantController extends Controller
         // Statistics
         $stats = [
             'total_variants' => ProductVariant::count(),
-            'active_variants' => ProductVariant::where('is_active', true)->count(),
-            'low_stock_variants' => ProductVariant::whereColumn('inventory_quantity', '<=', 'inventory_quantity_alert')->count(),
-            'out_of_stock_variants' => ProductVariant::where('inventory_quantity', '<=', 0)->count(),
+            'active_variants' => ProductVariant::where('active', true)->count(),
+            'low_stock_variants' => ProductVariant::whereColumn('stock_quantity', '<=', 'min_stock')->count(),
+            'out_of_stock_variants' => ProductVariant::where('stock_quantity', '<=', 0)->count(),
         ];
 
         return view('admin.product-variants.index', compact('variants', 'products', 'stats'));
@@ -102,25 +102,16 @@ class ProductVariantController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'product_id' => 'required|exists:products,id',
-            'title' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
             'sku' => 'nullable|string|max:100|unique:product_variants,sku',
             'barcode' => 'nullable|string|max:100|unique:product_variants,barcode',
-            'price' => 'nullable|numeric|min:0',
-            'compare_at_price' => 'nullable|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
-            'inventory_quantity' => 'required|integer|min:0',
-            'inventory_quantity_alert' => 'nullable|integer|min:0',
-            'track_inventory' => 'boolean',
-            'continue_selling_when_out_of_stock' => 'boolean',
-            'weight' => 'nullable|numeric|min:0',
-            'length' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'requires_shipping' => 'boolean',
-            'taxable' => 'boolean',
-            'is_active' => 'boolean',
-            'option_values' => 'required|array',
-            'option_values.*' => 'required|exists:product_variant_option_values,id',
+            'price_adjustment' => 'nullable|numeric',
+            'cost_adjustment' => 'nullable|numeric',
+            'stock_quantity' => 'required|integer|min:0',
+            'min_stock' => 'nullable|integer|min:0',
+            'weight_adjustment' => 'nullable|numeric',
+            'active' => 'boolean',
+            'option_values' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -140,37 +131,24 @@ class ProductVariantController extends Controller
                 $sku = ProductVariant::generateUniqueSku($product->sku, $request->option_values);
             }
 
-            // Generate title if not provided
-            $title = $request->title;
-            if (empty($title)) {
-                $optionValues = ProductVariantOptionValue::whereIn('id', $request->option_values)->get();
-                $title = $product->name . ' - ' . $optionValues->pluck('display_value')->join(' / ');
+            $optionValues = json_decode($request->option_values, true);
+            if (!is_array($optionValues)) {
+                throw new \Exception('Valores das opções devem ser um JSON válido.');
             }
 
             $variant = ProductVariant::create([
                 'product_id' => $request->product_id,
-                'title' => $title,
+                'name' => $request->name,
                 'sku' => $sku,
                 'barcode' => $request->barcode,
-                'price' => $request->price,
-                'compare_at_price' => $request->compare_at_price,
-                'cost_price' => $request->cost_price,
-                'inventory_quantity' => $request->inventory_quantity,
-                'inventory_quantity_alert' => $request->inventory_quantity_alert ?? 5,
-                'track_inventory' => $request->boolean('track_inventory', true),
-                'continue_selling_when_out_of_stock' => $request->boolean('continue_selling_when_out_of_stock', false),
-                'weight' => $request->weight,
-                'length' => $request->length,
-                'width' => $request->width,
-                'height' => $request->height,
-                'requires_shipping' => $request->boolean('requires_shipping', true),
-                'taxable' => $request->boolean('taxable', true),
-                'is_active' => $request->boolean('is_active', true),
-                'metafields' => $request->metafields ?? [],
+                'option_values' => $optionValues,
+                'price_adjustment' => $request->price_adjustment ?? 0,
+                'cost_adjustment' => $request->cost_adjustment ?? 0,
+                'stock_quantity' => $request->stock_quantity,
+                'min_stock' => $request->min_stock ?? 0,
+                'weight_adjustment' => $request->weight_adjustment ?? 0,
+                'active' => $request->boolean('active', true),
             ]);
-
-            // Associate option values
-            $variant->variantOptionValues()->sync($request->option_values);
 
             DB::commit();
 
@@ -212,7 +190,7 @@ class ProductVariantController extends Controller
     public function update(Request $request, ProductVariant $productVariant)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
             'sku' => [
                 'nullable',
                 'string',
@@ -225,22 +203,13 @@ class ProductVariantController extends Controller
                 'max:100',
                 Rule::unique('product_variants', 'barcode')->ignore($productVariant->id)
             ],
-            'price' => 'nullable|numeric|min:0',
-            'compare_at_price' => 'nullable|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
-            'inventory_quantity' => 'required|integer|min:0',
-            'inventory_quantity_alert' => 'nullable|integer|min:0',
-            'track_inventory' => 'boolean',
-            'continue_selling_when_out_of_stock' => 'boolean',
-            'weight' => 'nullable|numeric|min:0',
-            'length' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'requires_shipping' => 'boolean',
-            'taxable' => 'boolean',
-            'is_active' => 'boolean',
-            'option_values' => 'required|array',
-            'option_values.*' => 'required|exists:product_variant_option_values,id',
+            'price_adjustment' => 'nullable|numeric',
+            'cost_adjustment' => 'nullable|numeric',
+            'stock_quantity' => 'required|integer|min:0',
+            'min_stock' => 'nullable|integer|min:0',
+            'weight_adjustment' => 'nullable|numeric',
+            'active' => 'boolean',
+            'option_values' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -252,29 +221,23 @@ class ProductVariantController extends Controller
         try {
             DB::beginTransaction();
 
+            $optionValues = json_decode($request->option_values, true);
+            if (!is_array($optionValues)) {
+                throw new \Exception('Valores das opções devem ser um JSON válido.');
+            }
+
             $productVariant->update([
-                'title' => $request->title,
+                'name' => $request->name,
                 'sku' => $request->sku,
                 'barcode' => $request->barcode,
-                'price' => $request->price,
-                'compare_at_price' => $request->compare_at_price,
-                'cost_price' => $request->cost_price,
-                'inventory_quantity' => $request->inventory_quantity,
-                'inventory_quantity_alert' => $request->inventory_quantity_alert ?? 5,
-                'track_inventory' => $request->boolean('track_inventory', true),
-                'continue_selling_when_out_of_stock' => $request->boolean('continue_selling_when_out_of_stock', false),
-                'weight' => $request->weight,
-                'length' => $request->length,
-                'width' => $request->width,
-                'height' => $request->height,
-                'requires_shipping' => $request->boolean('requires_shipping', true),
-                'taxable' => $request->boolean('taxable', true),
-                'is_active' => $request->boolean('is_active', true),
-                'metafields' => $request->metafields ?? [],
+                'option_values' => $optionValues,
+                'price_adjustment' => $request->price_adjustment ?? 0,
+                'cost_adjustment' => $request->cost_adjustment ?? 0,
+                'stock_quantity' => $request->stock_quantity,
+                'min_stock' => $request->min_stock ?? 0,
+                'weight_adjustment' => $request->weight_adjustment ?? 0,
+                'active' => $request->boolean('active', true),
             ]);
-
-            // Update option values
-            $productVariant->variantOptionValues()->sync($request->option_values);
 
             DB::commit();
 
@@ -311,10 +274,10 @@ class ProductVariantController extends Controller
     public function toggleStatus(ProductVariant $productVariant)
     {
         $productVariant->update([
-            'is_active' => !$productVariant->is_active
+            'active' => !$productVariant->active
         ]);
 
-        $status = $productVariant->is_active ? 'ativada' : 'desativada';
+        $status = $productVariant->active ? 'ativada' : 'desativada';
         
         return redirect()->back()
             ->with('success', "Variação {$status} com sucesso!");
@@ -359,7 +322,7 @@ class ProductVariantController extends Controller
     {
         $variantOptions = $product->variantOptions()
             ->with('values')
-            ->where('is_active', true)
+            ->where('active', true)
             ->orderBy('position')
             ->get();
 
@@ -413,7 +376,7 @@ class ProductVariantController extends Controller
                         'track_inventory' => true,
                         'requires_shipping' => true,
                         'taxable' => true,
-                        'is_active' => true,
+                        'active' => true,
                     ]);
 
                     $variant->variantOptionValues()->sync($combination);

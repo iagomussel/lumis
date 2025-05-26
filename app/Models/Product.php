@@ -107,20 +107,8 @@ class Product extends Model
 
     public function activeVariants(): HasMany
     {
-        return $this->hasMany(ProductVariant::class)->where('is_active', true);
+        return $this->hasMany(ProductVariant::class)->where('active', true);
     }
-
-    public function variantOptions(): HasMany
-    {
-        return $this->hasMany(ProductVariantOption::class)->orderBy('position');
-    }
-
-    public function activeVariantOptions(): HasMany
-    {
-        return $this->hasMany(ProductVariantOption::class)->where('is_active', true)->orderBy('position');
-    }
-
-
 
     // Scopes
     public function scopeActive($query)
@@ -368,11 +356,6 @@ class Product extends Model
     public function getTotalVariantStockAttribute()
     {
         return $this->activeVariants()->sum('stock_quantity');
-    }
-
-    public function getVariantOptionsAttribute()
-    {
-        return $this->variantOptions()->where('is_active', true)->orderBy('position')->get();
     }
 
     // Business logic methods

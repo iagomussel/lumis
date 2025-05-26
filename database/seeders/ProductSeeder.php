@@ -153,7 +153,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.8,
                 'reviews_count' => 127,
                 'category_id' => $categories['canecas']->id,
-                'images' => ['/images/products/caneca-branca-01.jpg', '/images/products/caneca-branca-02.jpg'],
+                'images' => ['https://prd.place/400?text=Caneca+Branca+325ml'],
                 'specifications' => [
                     'material' => 'Porcelana',
                     'capacidade' => '325ml',
@@ -187,7 +187,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.9,
                 'reviews_count' => 89,
                 'category_id' => $categories['canecas']->id,
-                'images' => ['/images/products/caneca-magica-01.jpg', '/images/products/caneca-magica-02.jpg'],
+                'images' => ['https://prd.place/400?text=Caneca+Magica+320ml'],
                 'specifications' => [
                     'material' => 'Cerâmica especial',
                     'capacidade' => '320ml',
@@ -223,7 +223,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.7,
                 'reviews_count' => 156,
                 'category_id' => $categories['camisetas']->id,
-                'images' => ['/images/products/camiseta-branca-m-01.jpg'],
+                'images' => ['https://prd.place/400?text=Camiseta+Poliéster+Branca+M'],
                 'specifications' => [
                     'material' => '100% Poliéster',
                     'tamanho' => 'M',
@@ -259,7 +259,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.6,
                 'reviews_count' => 73,
                 'category_id' => $categories['almofadas']->id,
-                'images' => ['/images/products/almofada-40x40-01.jpg'],
+                'images' => ['https://prd.place/400?text=Almofada+40x40cm'],
                 'specifications' => [
                     'material' => 'Poliéster',
                     'dimensoes' => '40x40cm',
@@ -295,7 +295,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.5,
                 'reviews_count' => 92,
                 'category_id' => $categories['quadros']->id,
-                'images' => ['/images/products/quadro-mdf-20x30-01.jpg'],
+                'images' => ['https://prd.place/400?text=Quadro+MDF+20x30cm'],
                 'specifications' => [
                     'material' => 'MDF revestido',
                     'dimensoes' => '20x30cm',
@@ -331,7 +331,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.4,
                 'reviews_count' => 234,
                 'category_id' => $categories['chaveiros']->id,
-                'images' => ['/images/products/chaveiro-acrilico-redondo-01.jpg'],
+                'images' => ['https://prd.place/400?text=Chaveiro+Acrílico+Redondo'],
                 'specifications' => [
                     'material' => 'Acrílico cristal',
                     'formato' => 'Redondo',
@@ -370,7 +370,7 @@ class ProductSeeder extends Seeder
                 'rating' => 4.9,
                 'reviews_count' => 67,
                 'category_id' => $categories['canecas']->id,
-                'images' => ['/images/products/kit-6-canecas-01.jpg', '/images/products/kit-6-canecas-02.jpg'],
+                'images' => ['https://prd.place/400?text=Kit+6+Canecas+Coloridas'],
                 'specifications' => [
                     'quantidade' => '6 unidades',
                     'cores' => 'Variadas',

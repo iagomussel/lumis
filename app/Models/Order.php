@@ -66,6 +66,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function deliverySchedule()
+    {
+        return $this->hasOne(DeliverySchedule::class);
+    }
+
     // Scopes
     public function scopePending($query)
     {

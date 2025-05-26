@@ -274,55 +274,66 @@ const appState = {
     lastOrderId: null
 };
 
-// Elementos DOM
-const elements = {
-    productSearch: document.getElementById('product-search'),
-    productsGrid: document.getElementById('products-grid'),
-    emptyState: document.getElementById('empty-state'),
-    cartItems: document.getElementById('cart-items'),
-    emptyCart: document.getElementById('empty-cart'),
-    cartItemsCount: document.getElementById('cart-items-count'),
-    subtotal: document.getElementById('subtotal'),
-    discountAmount: document.getElementById('discount-amount'),
-    total: document.getElementById('total'),
-    discount: document.getElementById('discount'),
-    paymentMethod: document.getElementById('payment-method'),
-    notes: document.getElementById('notes'),
-    customerSelect: document.getElementById('customer-select'),
-    processSale: document.getElementById('process-sale'),
-    clearCart: document.getElementById('clear-cart'),
-    partialPayment: document.getElementById('partial-payment'),
-    partialPaymentSection: document.getElementById('partial-payment-section'),
-    partialAmount: document.getElementById('partial-amount'),
-    set50Percent: document.getElementById('set-50-percent'),
-    remainingInfo: document.getElementById('remaining-info'),
-    downPaymentDisplay: document.getElementById('down-payment-display'),
-    remainingDisplay: document.getElementById('remaining-display')
-};
+// Elementos DOM - Inicialização segura
+const elements = {};
+
+function initializeElements() {
+    elements.productSearch = document.getElementById('product-search');
+    elements.productsGrid = document.getElementById('products-grid');
+    elements.emptyState = document.getElementById('empty-state');
+    elements.cartItems = document.getElementById('cart-items');
+    elements.emptyCart = document.getElementById('empty-cart');
+    elements.cartItemsCount = document.getElementById('cart-items-count');
+    elements.subtotal = document.getElementById('subtotal');
+    elements.discountAmount = document.getElementById('discount-amount');
+    elements.total = document.getElementById('total');
+    elements.discount = document.getElementById('discount');
+    elements.paymentMethod = document.getElementById('payment-method');
+    elements.notes = document.getElementById('notes');
+    elements.customerSelect = document.getElementById('customer-select');
+    elements.processSale = document.getElementById('process-sale');
+    elements.clearCart = document.getElementById('clear-cart');
+    elements.partialPayment = document.getElementById('partial-payment');
+    elements.partialPaymentSection = document.getElementById('partial-payment-section');
+    elements.partialAmount = document.getElementById('partial-amount');
+    elements.set50Percent = document.getElementById('set-50-percent');
+    elements.remainingInfo = document.getElementById('remaining-info');
+    elements.downPaymentDisplay = document.getElementById('down-payment-display');
+    elements.remainingDisplay = document.getElementById('remaining-display');
+}
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM carregado - Inicializando PDV');
     
-    // Verificar se todos os elementos essenciais existem
-    const requiredElements = ['product-search', 'products-grid', 'empty-state', 'cart-items', 'empty-cart'];
-    const missingElements = [];
-    
-    for (const elementId of requiredElements) {
-        const element = document.getElementById(elementId);
-        if (!element) {
-            console.error(`❌ Elemento obrigatório não encontrado: ${elementId}`);
-            missingElements.push(elementId);
-        }
-    }
-    
-    if (missingElements.length > 0) {
-        console.error('🚨 Elementos faltantes:', missingElements);
-        alert('Erro: Elementos HTML faltantes no PDV. Verifique o console para detalhes.');
-        return;
-    }
-    
     try {
+        // Inicializar elementos DOM
+        initializeElements();
+        
+        // Verificar se estamos na página do PDV
+        if (!elements.productSearch && !elements.cartItems) {
+            console.log('ℹ️ Não é a página do PDV - pulando inicialização');
+            return;
+        }
+        
+        // Verificar se todos os elementos essenciais existem
+        const requiredElements = ['product-search', 'products-grid', 'empty-state', 'cart-items', 'empty-cart'];
+        const missingElements = [];
+        
+        for (const elementId of requiredElements) {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                console.error(`❌ Elemento obrigatório não encontrado: ${elementId}`);
+                missingElements.push(elementId);
+            }
+        }
+        
+        if (missingElements.length > 0) {
+            console.error('🚨 Elementos faltantes:', missingElements);
+            console.log('ℹ️ Provavelmente não é a página do PDV');
+            return;
+        }
+        
         initializeEventListeners();
         updateCartDisplay();
         
@@ -331,9 +342,14 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.productSearch.focus();
         }
         
+        console.log('✅ PDV inicializado com sucesso');
+        
     } catch (error) {
         console.error('💥 Erro durante inicialização:', error);
-        alert('Erro durante inicialização do PDV: ' + error.message);
+        // Não mostrar alert se não for a página do PDV
+        if (elements.productSearch || elements.cartItems) {
+            alert('Erro durante inicialização do PDV: ' + error.message);
+        }
     }
 });
 
@@ -596,18 +612,28 @@ function updateCartDisplay() {
         const emptyCart = elements.emptyCart;
         const itemsCount = elements.cartItemsCount;
         
+        // Verificar se os elementos existem
+        if (!cartContainer || !emptyCart || !itemsCount) {
+            console.error('❌ Elementos do carrinho não encontrados:', {
+                cartContainer: !!cartContainer,
+                emptyCart: !!emptyCart,
+                itemsCount: !!itemsCount
+            });
+            return;
+        }
+        
         if (appState.cart.length === 0) {
             cartContainer.classList.add('hidden');
             emptyCart.classList.remove('hidden');
             itemsCount.textContent = '0';
-            elements.processSale.disabled = true;
+            if (elements.processSale) elements.processSale.disabled = true;
             updateTotals();
             return;
         }
         
         emptyCart.classList.add('hidden');
         cartContainer.classList.remove('hidden');
-        elements.processSale.disabled = false;
+        if (elements.processSale) elements.processSale.disabled = false;
         
         const totalItems = appState.cart.reduce((sum, item) => sum + item.quantity, 0);
         itemsCount.textContent = totalItems;
@@ -651,12 +677,12 @@ function updateCartDisplay() {
 // Atualizar totais
 function updateTotals() {
     const subtotal = appState.cart.reduce((sum, item) => sum + (item.quantity * parseFloat(item.unit_price)), 0);
-    const discount = parseFloat(elements.discount.value) || 0;
+    const discount = parseFloat(elements.discount?.value) || 0;
     const total = Math.max(0, subtotal - discount);
     
-    elements.subtotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-    elements.discountAmount.textContent = `R$ ${discount.toFixed(2).replace('.', ',')}`;
-    elements.total.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    if (elements.subtotal) elements.subtotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+    if (elements.discountAmount) elements.discountAmount.textContent = `R$ ${discount.toFixed(2).replace('.', ',')}`;
+    if (elements.total) elements.total.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 }
 
 // Processar venda
@@ -671,27 +697,29 @@ async function processSale() {
     
     if (partialPaymentData && partialPaymentData.paidAmount > partialPaymentData.totalAmount) {
         alert('O valor do sinal não pode ser maior que o total!');
-        elements.partialAmount.focus();
+        if (elements.partialAmount) elements.partialAmount.focus();
         return;
     }
     
     if (partialPaymentData && partialPaymentData.paidAmount <= 0) {
         alert('O valor do sinal deve ser maior que zero!');
-        elements.partialAmount.focus();
+        if (elements.partialAmount) elements.partialAmount.focus();
         return;
     }
     
     const data = {
         customer_id: appState.selectedCustomer?.id || null,
         items: appState.cart,
-        payment_method: elements.paymentMethod.value,
-        discount: parseFloat(elements.discount.value) || 0,
-        notes: elements.notes.value.trim(),
+        payment_method: elements.paymentMethod?.value || 'money',
+        discount: parseFloat(elements.discount?.value) || 0,
+        notes: elements.notes?.value?.trim() || '',
         partial_payment: partialPaymentData
     };
     
-    elements.processSale.disabled = true;
-    elements.processSale.innerHTML = '<i class="ti ti-loader animate-spin mr-1"></i> Processando...';
+    if (elements.processSale) {
+        elements.processSale.disabled = true;
+        elements.processSale.innerHTML = '<i class="ti ti-loader animate-spin mr-1"></i> Processando...';
+    }
     
     try {
         const response = await fetch('{{ route('admin.pos.process-sale') }}', {
@@ -718,8 +746,10 @@ async function processSale() {
         console.error('Erro ao processar venda:', error);
         alert('Erro ao processar venda. Tente novamente.');
     } finally {
-        elements.processSale.disabled = false;
-        elements.processSale.innerHTML = '<i class="ti ti-check mr-1"></i> Finalizar Venda';
+        if (elements.processSale) {
+            elements.processSale.disabled = false;
+            elements.processSale.innerHTML = '<i class="ti ti-check mr-1"></i> Finalizar Venda';
+        }
     }
 }
 
@@ -727,34 +757,47 @@ async function processSale() {
 function clearCart() {
     appState.cart = [];
     appState.selectedCustomer = null;
-    elements.customerSelect.value = '';
-    elements.discount.value = '';
-    elements.notes.value = '';
+    if (elements.customerSelect) elements.customerSelect.value = '';
+    if (elements.discount) elements.discount.value = '';
+    if (elements.notes) elements.notes.value = '';
     
     // Limpar pagamento parcial
-    elements.partialPayment.checked = false;
-    elements.partialAmount.value = '';
-    elements.partialPaymentSection.classList.add('hidden');
-    elements.remainingInfo.classList.add('hidden');
-    elements.partialAmount.style.borderColor = '';
-    elements.partialAmount.style.backgroundColor = '';
+    if (elements.partialPayment) elements.partialPayment.checked = false;
+    if (elements.partialAmount) {
+        elements.partialAmount.value = '';
+        elements.partialAmount.style.borderColor = '';
+        elements.partialAmount.style.backgroundColor = '';
+    }
+    if (elements.partialPaymentSection) elements.partialPaymentSection.classList.add('hidden');
+    if (elements.remainingInfo) elements.remainingInfo.classList.add('hidden');
     
     updateCartDisplay();
 }
 
 // Modal de sucesso
 function showSuccessModal(result) {
-    document.getElementById('success-message').textContent = 
-        `Pedido ${result.order.order_number} - Total: ${result.order.formatted_total}`;
-    document.getElementById('success-modal').classList.remove('hidden');
-    document.getElementById('success-modal').classList.add('flex');
+    const successMessage = document.getElementById('success-message');
+    const successModal = document.getElementById('success-modal');
+    
+    if (successMessage) {
+        successMessage.textContent = 
+            `Pedido ${result.order.order_number} - Total: ${result.order.formatted_total}`;
+    }
+    
+    if (successModal) {
+        successModal.classList.remove('hidden');
+        successModal.classList.add('flex');
+    }
 }
 
 // Nova venda
 function startNewSale() {
-    document.getElementById('success-modal').classList.add('hidden');
-    document.getElementById('success-modal').classList.remove('flex');
-    elements.productSearch.focus();
+    const successModal = document.getElementById('success-modal');
+    if (successModal) {
+        successModal.classList.add('hidden');
+        successModal.classList.remove('flex');
+    }
+    if (elements.productSearch) elements.productSearch.focus();
 }
 
 // Imprimir cupom
@@ -915,41 +958,56 @@ function selectCustomerFromSearch(customer) {
 
 // Modals de cliente
 function openCustomerSearchModal() {
-    document.getElementById('customer-search-modal').classList.remove('hidden');
-    document.getElementById('customer-search-modal').classList.add('flex');
-    document.getElementById('customer-search-input').focus();
+    const modal = document.getElementById('customer-search-modal');
+    const input = document.getElementById('customer-search-input');
+    
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    if (input) input.focus();
 }
 
 function closeCustomerSearchModal() {
-    document.getElementById('customer-search-modal').classList.add('hidden');
-    document.getElementById('customer-search-modal').classList.remove('flex');
-    document.getElementById('customer-search-input').value = '';
-    document.getElementById('customer-search-results').innerHTML = '';
+    const modal = document.getElementById('customer-search-modal');
+    const input = document.getElementById('customer-search-input');
+    const results = document.getElementById('customer-search-results');
+    
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    if (input) input.value = '';
+    if (results) results.innerHTML = '';
 }
 
 // Funções de Pagamento Parcial
 function togglePartialPayment() {
+    if (!elements.partialPayment) return;
+    
     const isPartial = elements.partialPayment.checked;
     
     if (isPartial) {
-        elements.partialPaymentSection.classList.remove('hidden');
-        elements.partialAmount.focus();
+        if (elements.partialPaymentSection) elements.partialPaymentSection.classList.remove('hidden');
+        if (elements.partialAmount) elements.partialAmount.focus();
         
         // Sugerir 50% como padrão
         const total = calculateFinalTotal();
-        if (total > 0) {
+        if (total > 0 && elements.partialAmount) {
             const halfAmount = total / 2;
             elements.partialAmount.value = halfAmount.toFixed(2);
             updatePartialPaymentInfo();
         }
     } else {
-        elements.partialPaymentSection.classList.add('hidden');
-        elements.remainingInfo.classList.add('hidden');
-        elements.partialAmount.value = '';
+        if (elements.partialPaymentSection) elements.partialPaymentSection.classList.add('hidden');
+        if (elements.remainingInfo) elements.remainingInfo.classList.add('hidden');
+        if (elements.partialAmount) elements.partialAmount.value = '';
     }
 }
 
 function set50PercentPayment() {
+    if (!elements.partialAmount) return;
+    
     const total = calculateFinalTotal();
     if (total > 0) {
         const halfAmount = total / 2;
@@ -959,14 +1017,16 @@ function set50PercentPayment() {
 }
 
 function updatePartialPaymentInfo() {
+    if (!elements.partialAmount) return;
+    
     const partialAmount = parseFloat(elements.partialAmount.value) || 0;
     const total = calculateFinalTotal();
     const remaining = Math.max(0, total - partialAmount);
     
     if (partialAmount > 0 && partialAmount <= total) {
-        elements.remainingInfo.classList.remove('hidden');
-        elements.downPaymentDisplay.textContent = `R$ ${partialAmount.toFixed(2).replace('.', ',')}`;
-        elements.remainingDisplay.textContent = `R$ ${remaining.toFixed(2).replace('.', ',')}`;
+        if (elements.remainingInfo) elements.remainingInfo.classList.remove('hidden');
+        if (elements.downPaymentDisplay) elements.downPaymentDisplay.textContent = `R$ ${partialAmount.toFixed(2).replace('.', ',')}`;
+        if (elements.remainingDisplay) elements.remainingDisplay.textContent = `R$ ${remaining.toFixed(2).replace('.', ',')}`;
         
         // Validação visual
         if (partialAmount > total) {
@@ -977,7 +1037,7 @@ function updatePartialPaymentInfo() {
             elements.partialAmount.style.backgroundColor = '#f0fdf4';
         }
     } else {
-        elements.remainingInfo.classList.add('hidden');
+        if (elements.remainingInfo) elements.remainingInfo.classList.add('hidden');
         elements.partialAmount.style.borderColor = '';
         elements.partialAmount.style.backgroundColor = '';
     }
