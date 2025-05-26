@@ -1,24 +1,24 @@
-@extends('layouts.public')
+@extends('layouts.ecommerce')
 
 @section('title', 'Cadastro de Cliente')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen flex items-center justify-center lumis-hero-gradient py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-2xl w-full space-y-8">
         <div class="text-center">
-            <div class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-4">
+            <div class="w-16 h-16 rounded-full brand-bg-accent flex items-center justify-center mx-auto mb-4">
                 <i class="ti ti-user-plus text-white text-2xl"></i>
             </div>
-            <h2 class="text-3xl font-bold text-gray-500">
+            <h2 class="text-3xl font-bold text-white">
                 Criar nova conta
             </h2>
-            <p class="mt-2 text-sm text-gray-400">
-                Preencha os dados abaixo para criar sua conta
+            <p class="mt-2 text-sm text-blue-100">
+                Preencha os dados abaixo para criar sua conta em {{ config('branding.store.name') }}
             </p>
         </div>
 
-        <div class="card">
-            <div class="card-body">
+        <div class="bg-white rounded-lg shadow-xl p-8">
+            <div>
                 <form method="POST" action="{{ route('customer.register') }}" class="space-y-6">
                     @csrf
 
