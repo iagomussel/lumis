@@ -13,7 +13,8 @@ use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\FinancialController;
 use App\Http\Controllers\Admin\ProductionController;
-use App\Http\Controllers\Admin\ProductOptionController;
+use App\Http\Controllers\Admin\ProductVariantController;
+use App\Http\Controllers\Admin\ProductVariantOptionController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\DeliveryController;
 use App\Http\Controllers\Admin\SearchController;
@@ -88,9 +89,20 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Gestão de Produtos
     Route::resource('products', ProductController::class);
     
-    // Gestão de Opções de Produtos
-    Route::resource('product-options', ProductOptionController::class);
-    Route::post('product-options/{productOption}/toggle-status', [ProductOptionController::class, 'toggleStatus'])->name('product-options.toggle-status');
+    // Gestão de Variações de Produtos
+    Route::resource('product-variants', ProductVariantController::class);
+    Route::post('product-variants/{productVariant}/toggle-status', [ProductVariantController::class, 'toggleStatus'])->name('product-variants.toggle-status');
+    Route::post('product-variants/bulk-update-inventory', [ProductVariantController::class, 'bulkUpdateInventory'])->name('product-variants.bulk-update-inventory');
+    Route::get('products/{product}/variant-options', [ProductVariantController::class, 'getProductVariantOptions'])->name('products.variant-options');
+    Route::post('products/{product}/generate-combinations', [ProductVariantController::class, 'generateCombinations'])->name('products.generate-combinations');
+    
+    // Gestão de Opções de Variações
+    Route::resource('product-variant-options', ProductVariantOptionController::class);
+    Route::post('product-variant-options/{productVariantOption}/toggle-status', [ProductVariantOptionController::class, 'toggleStatus'])->name('product-variant-options.toggle-status');
+    Route::post('product-variant-options/reorder', [ProductVariantOptionController::class, 'reorder'])->name('product-variant-options.reorder');
+    Route::get('product-variant-options/{productVariantOption}/values', [ProductVariantOptionController::class, 'getValues'])->name('product-variant-options.values');
+    Route::post('product-variant-options/{productVariantOption}/add-value', [ProductVariantOptionController::class, 'addValue'])->name('product-variant-options.add-value');
+    Route::delete('product-variant-options/{productVariantOption}/values/{value}', [ProductVariantOptionController::class, 'removeValue'])->name('product-variant-options.remove-value');
     
     // Gestão de Clientes
     Route::resource('customers', CustomerController::class);
@@ -153,6 +165,20 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('bulk-delete');
         Route::post('/cleanup', [ActivityLogController::class, 'cleanup'])->name('cleanup');
     });
+    
+    // Gestão de Entregas
+    Route::resource('deliveries', DeliveryController::class);
+    Route::post('deliveries/{delivery}/confirm', [DeliveryController::class, 'confirm'])->name('deliveries.confirm');
+    Route::post('deliveries/{delivery}/dispatch', [DeliveryController::class, 'dispatch'])->name('deliveries.dispatch');
+    Route::post('deliveries/{delivery}/mark-delivered', [DeliveryController::class, 'markAsDelivered'])->name('deliveries.mark-delivered');
+    Route::post('deliveries/{delivery}/cancel', [DeliveryController::class, 'cancel'])->name('deliveries.cancel');
+    Route::post('deliveries/{delivery}/update-payment', [DeliveryController::class, 'updatePayment'])->name('deliveries.update-payment');
+    Route::get('deliveries/track/{trackingCode}', [DeliveryController::class, 'track'])->name('deliveries.track');
+    Route::get('deliveries-dashboard', [DeliveryController::class, 'dashboard'])->name('deliveries.dashboard');
+    
+    // Busca Global
+    Route::get('/search', [SearchController::class, 'page'])->name('search');
+    Route::get('/search/global', [SearchController::class, 'global'])->name('search.global');
     
     // Gestão Financeira
     Route::prefix('financial')->name('financial.')->group(function () {

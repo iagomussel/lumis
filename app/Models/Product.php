@@ -107,20 +107,20 @@ class Product extends Model
 
     public function activeVariants(): HasMany
     {
-        return $this->hasMany(ProductVariant::class)->where('active', true);
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
     }
 
-    public function options(): BelongsToMany
+    public function variantOptions(): HasMany
     {
-        return $this->belongsToMany(ProductOption::class, 'product_option_assignments')
-                    ->withPivot('available_values', 'required', 'sort_order')
-                    ->withTimestamps();
+        return $this->hasMany(ProductVariantOption::class)->orderBy('position');
     }
 
-    public function optionAssignments(): HasMany
+    public function activeVariantOptions(): HasMany
     {
-        return $this->hasMany(ProductOptionAssignment::class);
+        return $this->hasMany(ProductVariantOption::class)->where('is_active', true)->orderBy('position');
     }
+
+
 
     // Scopes
     public function scopeActive($query)
@@ -372,7 +372,7 @@ class Product extends Model
 
     public function getVariantOptionsAttribute()
     {
-        return $this->options()->active()->ordered()->get();
+        return $this->variantOptions()->where('is_active', true)->orderBy('position')->get();
     }
 
     // Business logic methods
