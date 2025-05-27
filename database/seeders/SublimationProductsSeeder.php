@@ -33,8 +33,8 @@ class SublimationProductsSeeder extends Seeder
             for ($i = 0; $i < $variations; $i++) {
                 $product = $this->createProduct($template, $categories, $faker, $productId);
                 
-                // Criar variações para produtos que suportam
-                if (isset($template['variant_options'])) {
+                // Só criar variações se o produto foi criado com sucesso
+                if ($product && isset($template['variant_options'])) {
                     $this->createProductVariants($product, $template['variant_options'], $faker);
                 }
                 
@@ -448,7 +448,25 @@ class SublimationProductsSeeder extends Seeder
         $variation = $template['variations'] > 1 ? $faker->numberBetween(1, $template['variations']) : '';
         
         $name = $template['name'] . ($variation ? " V{$variation}" : '');
-        $sku = strtoupper(substr($template['category'], 0, 3)) . '-' . str_pad($productId, 3, '0', STR_PAD_LEFT);
+        
+        // Gerar SKU único
+        $baseSkuPrefix = strtoupper(substr($template['category'], 0, 3));
+        $skuNumber = str_pad($productId, 3, '0', STR_PAD_LEFT);
+        $sku = $baseSkuPrefix . '-' . $skuNumber;
+        
+        // Verificar se o SKU já existe e gerar um novo se necessário
+        $counter = 1;
+        $originalSku = $sku;
+        while (Product::where('sku', $sku)->exists()) {
+            $sku = $originalSku . '-' . $counter;
+            $counter++;
+        }
+        
+        // Verificar se o produto já existe pelo nome
+        if (Product::where('name', $name)->exists()) {
+            echo "Produto '{$name}' já existe, pulando...\n";
+            return null;
+        }
         
         // Preço com pequena variação
         $basePrice = $template['base_price'];
@@ -510,6 +528,10 @@ class SublimationProductsSeeder extends Seeder
     
     private function createProductVariants($product, $variantOptions, $faker)
     {
+        if (!$product) {
+            return;
+        }
+        
         $options = [];
         $optionCombinations = [];
         
@@ -525,8 +547,15 @@ class SublimationProductsSeeder extends Seeder
         $combinations = array_slice($combinations, 0, 20);
         
         foreach ($combinations as $combination) {
-            $variantSku = ProductVariant::generateUniqueSku($product->sku, $combination);
+            $variantSku = $this->generateUniqueVariantSku($product->sku, $combination);
             $variantName = $product->name . ' - ' . implode(' ', $combination);
+            
+            // Verificar se a variante já existe
+            if (ProductVariant::where('sku', $variantSku)->exists() || 
+                ProductVariant::where('name', $variantName)->exists()) {
+                echo "Variante '{$variantName}' já existe, pulando...\n";
+                continue;
+            }
             
             // Ajustes de preço baseados nas opções
             $priceAdjustment = $this->calculatePriceAdjustment($combination);
@@ -643,6 +672,50 @@ class SublimationProductsSeeder extends Seeder
         }
         
         return round($adjustment, 3);
+    }
+    
+    private function generateUniqueVariantSku($baseSku, $combination)
+    {
+        // Gerar SKU baseado no SKU do produto e nas opções
+        $optionSuffix = '';
+        foreach ($combination as $option => $value) {
+            // Remover acentos e caracteres especiais
+            $cleanValue = $this->removeAccents($value);
+            // Pegar apenas caracteres alfanuméricos
+            $cleanValue = preg_replace('/[^A-Za-z0-9]/', '', $cleanValue);
+            $optionSuffix .= '-' . strtoupper(substr($cleanValue, 0, 2));
+        }
+        
+        $sku = $baseSku . $optionSuffix;
+        
+        // Verificar se já existe e gerar um único se necessário
+        $counter = 1;
+        $originalSku = $sku;
+        while (ProductVariant::where('sku', $sku)->exists()) {
+            $sku = $originalSku . '-' . $counter;
+            $counter++;
+        }
+        
+        return $sku;
+    }
+    
+    private function removeAccents($string)
+    {
+        $accents = [
+            'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A',
+            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a',
+            'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E',
+            'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I',
+            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+            'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O',
+            'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
+            'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+            'Ç' => 'C', 'ç' => 'c', 'Ñ' => 'N', 'ñ' => 'n'
+        ];
+        
+        return strtr($string, $accents);
     }
     
     private function getProductDescriptions($name, $category)

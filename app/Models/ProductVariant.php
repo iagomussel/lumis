@@ -24,6 +24,7 @@ class ProductVariant extends Model
         'min_stock',
         'weight_adjustment',
         'active',
+        'images',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class ProductVariant extends Model
         'stock_quantity' => 'integer',
         'min_stock' => 'integer',
         'active' => 'boolean',
+        'images' => 'array',
     ];
 
     // Relacionamentos
