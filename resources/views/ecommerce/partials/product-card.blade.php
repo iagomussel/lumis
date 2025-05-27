@@ -1,13 +1,13 @@
 <div class="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden">
     <div class="relative">
         <!-- Product Image -->
-        <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+        <a href="{{ route('ecommerce.product', $product->id) }}" class="block w-full h-48 bg-gray-100 flex items-center justify-center group">
             @if($product->main_image)
-                <img src="{{ $product->main_image }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                <img src="{{ $product->main_image }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
             @else
                 <i class="ti ti-package text-gray-400 text-4xl"></i>
             @endif
-        </div>
+        </a>
         
         <!-- Badges -->
         <div class="absolute top-2 left-2 flex flex-col space-y-1">
@@ -92,11 +92,11 @@
             </a>
             
             @if($product->stock_quantity > 0)
-                <button onclick="addToCart({{ $product->id }}, 1)" 
-                        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                <a href="{{ route('ecommerce.product', $product->id) }}" 
+                   class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm hover:bg-blue-700 transition-colors text-center">
                     <i class="ti ti-shopping-cart mr-1"></i>
                     Comprar
-                </button>
+                </a>
             @else
                 <button class="flex-1 bg-gray-300 text-gray-500 py-2 px-4 rounded-lg text-sm cursor-not-allowed" disabled>
                     Esgotado

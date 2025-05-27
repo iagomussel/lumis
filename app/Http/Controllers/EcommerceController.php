@@ -157,7 +157,9 @@ class EcommerceController extends Controller
             abort(404);
         }
 
-        $product->load('category');
+        $product->load(['category', 'variants' => function($query) {
+            $query->where('active', true);
+        }]);
 
         // Produtos relacionados (mesma categoria)
         $relatedProducts = Product::availableOnline()
@@ -176,10 +178,12 @@ class EcommerceController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
+            'variant_id' => 'nullable|exists:product_variants,id'
         ]);
 
         $product = Product::find($request->product_id);
+        $variant = null;
 
         // Verificar se o produto está disponível
         if (!$product->online_sale || $product->status !== 'active') {
@@ -189,45 +193,103 @@ class EcommerceController extends Controller
             ], 400);
         }
 
-        // Verificar estoque
-        if ($product->stock_quantity < $request->quantity) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Quantidade não disponível em estoque'
-            ], 400);
+        // Se foi especificada uma variação, carregar e validar
+        if ($request->filled('variant_id')) {
+            $variant = $product->variants()->active()->find($request->variant_id);
+            
+            if (!$variant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Variação do produto não encontrada'
+                ], 400);
+            }
+
+            // Verificar estoque da variação
+            if ($variant->stock_quantity < $request->quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Quantidade não disponível em estoque para esta variação'
+                ], 400);
+            }
+        } else {
+            // Se produto tem variações obrigatórias, rejeitar
+            if ($product->variants()->active()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Por favor, selecione uma variação do produto'
+                ], 400);
+            }
+
+            // Verificar estoque do produto principal
+            if ($product->stock_quantity < $request->quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Quantidade não disponível em estoque'
+                ], 400);
+            }
         }
 
         // Obter carrinho atual
         $cart = Session::get('cart', []);
-        $productId = $product->id;
+        
+        // Gerar ID único para o item do carrinho (produto + variação)
+        $cartItemId = $variant ? 
+            $product->id . '_variant_' . $variant->id : 
+            $product->id;
 
-        if (isset($cart[$productId])) {
+        // Determinar preço e informações do item
+        $itemPrice = $variant ? 
+            $product->current_price + $variant->price_adjustment : 
+            $product->current_price;
+            
+        $itemName = $variant ? 
+            $product->name . ' - ' . $variant->option_values_display : 
+            $product->name;
+            
+        $itemSku = $variant ? 
+            $variant->sku : 
+            $product->sku;
+
+        $stockLimit = $variant ? 
+            $variant->stock_quantity : 
+            $product->stock_quantity;
+
+        if (isset($cart[$cartItemId])) {
             // Verificar se a nova quantidade não excede o estoque
-            $newQuantity = $cart[$productId]['quantity'] + $request->quantity;
-            if ($newQuantity > $product->stock_quantity) {
+            $newQuantity = $cart[$cartItemId]['quantity'] + $request->quantity;
+            if ($newQuantity > $stockLimit) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Quantidade total excede o estoque disponível'
                 ], 400);
             }
-            $cart[$productId]['quantity'] = $newQuantity;
+            $cart[$cartItemId]['quantity'] = $newQuantity;
         } else {
-            $cart[$productId] = [
+            $cart[$cartItemId] = [
                 'product_id' => $product->id,
-                'name' => $product->name,
-                'price' => $product->current_price,
+                'variant_id' => $variant?->id,
+                'name' => $itemName,
+                'price' => $itemPrice,
                 'quantity' => $request->quantity,
-                'image' => $product->main_image,
-                'sku' => $product->sku
+                'image' => $variant?->images[0] ?? $product->main_image,
+                'sku' => $itemSku,
+                'variant_display' => $variant?->option_values_display
             ];
         }
 
         Session::put('cart', $cart);
 
+        // Calcular total do carrinho
+        $cartTotal = 0;
+        foreach ($cart as $item) {
+            $cartTotal += $item['price'] * $item['quantity'];
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Produto adicionado ao carrinho',
-            'cart_count' => $this->getCartCount()
+            'cart_count' => $this->getCartCount(),
+            'cart_total' => 'R$ ' . number_format($cartTotal, 2, ',', '.')
         ]);
     }
 

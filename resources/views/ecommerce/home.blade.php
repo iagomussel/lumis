@@ -30,8 +30,8 @@
             </div>
             <div class="hidden lg:block">
                 <div class="relative">
-                    <div class="w-full h-96 bg-white bg-opacity-20 rounded-2xl backdrop-blur-sm flex items-center justify-center">
-                        <i class="ti ti-shopping-bag text-8xl text-white opacity-50"></i>
+                    <div class="w-full aspect-square bg-white bg-opacity-20 rounded-2xl backdrop-blur-sm overflow-hidden">
+                        <img src="/images/branding/hero.png" alt="Hero" class="w-full h-full object-cover" />
                     </div>
                     <!-- Floating cards -->
                     <div class="absolute -top-4 -left-4 bg-yellow-400 text-yellow-900 p-4 rounded-lg shadow-lg">
@@ -171,15 +171,19 @@
                             </div>
                         @endif
                         
-                        <div class="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
+                        <a href="{{ route('ecommerce.product', $product->id) }}" class="block w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center group">
                             @if($product->main_image)
-                                <img src="{{ $product->main_image }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg">
+                                <img src="{{ $product->main_image }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300">
                             @else
                                 <i class="ti ti-package text-gray-400 text-4xl"></i>
                             @endif
-                        </div>
+                        </a>
                         
-                        <h3 class="font-semibold text-lg mb-2">{{ $product->name }}</h3>
+                        <h3 class="font-semibold text-lg mb-2">
+                            <a href="{{ route('ecommerce.product', $product->id) }}" class="hover:text-blue-600 transition-colors">
+                                {{ $product->name }}
+                            </a>
+                        </h3>
                         <p class="text-gray-600 text-sm mb-4">{{ Str::limit($product->short_description ?: $product->description, 80) }}</p>
                         
                         <div class="flex items-center justify-between mb-4">
@@ -207,11 +211,11 @@
                                 Ver Detalhes
                             </a>
                             @if($product->stock_quantity > 0)
-                                <button onclick="addToCart({{ $product->id }}, 1)" 
-                                        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                <a href="{{ route('ecommerce.product', $product->id) }}" 
+                                   class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center">
                                     <i class="ti ti-shopping-cart mr-1"></i>
                                     Comprar
-                                </button>
+                                </a>
                             @endif
                         </div>
                     </div>

@@ -360,6 +360,7 @@ const cardElement = elements.create('card', {
             },
         },
     },
+    hidePostalCode: true, 
 });
 
 cardElement.mount('#card-element');

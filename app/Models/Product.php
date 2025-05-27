@@ -371,6 +371,14 @@ class Product extends Model
                $this->canBeOrdered($quantity);
     }
 
+    public function isOnPromotion()
+    {
+        return $this->promotional_price && 
+               $this->promotion_start && 
+               $this->promotion_end &&
+               now()->between($this->promotion_start, $this->promotion_end);
+    }
+
     public function needsProduction()
     {
         return $this->is_customizable || 

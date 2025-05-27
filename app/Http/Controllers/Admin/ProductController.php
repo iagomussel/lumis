@@ -91,7 +91,9 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $product->load('category');
+        $product->load(['category', 'variants' => function($query) {
+            $query->orderBy('created_at', 'desc');
+        }]);
         
         // Estatísticas do produto (quando implementarmos pedidos)
         $totalSold = 0; // $product->orderItems()->sum('quantity');

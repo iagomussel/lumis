@@ -20,7 +20,7 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center">
                 <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                    <img src="/images/branding/hero.png" alt="Hero" class="w-10 h-10 object-contain" />
+                    <i class="ti ti-package text-xl"></i>
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Total de Variações</p>

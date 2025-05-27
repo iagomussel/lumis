@@ -103,18 +103,22 @@ class ProductVariantController extends Controller
         $validator = Validator::make($request->all(), [
             'product_id' => 'required|exists:products,id',
             'name' => 'required|string|max:255',
-            'sku' => 'nullable|string|max:100|unique:product_variants,sku',
-            'barcode' => 'nullable|string|max:100|unique:product_variants,barcode',
+            'sku' => 'required|string|max:100|unique:product_variants,sku',
             'price_adjustment' => 'nullable|numeric',
-            'cost_adjustment' => 'nullable|numeric',
             'stock_quantity' => 'required|integer|min:0',
-            'min_stock' => 'nullable|integer|min:0',
-            'weight_adjustment' => 'nullable|numeric',
             'active' => 'boolean',
-            'option_values' => 'required|string',
+            'option_names' => 'nullable|array',
+            'option_values' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
@@ -125,38 +129,52 @@ class ProductVariantController extends Controller
 
             $product = Product::findOrFail($request->product_id);
 
-            // Generate SKU if not provided
-            $sku = $request->sku;
-            if (empty($sku)) {
-                $sku = ProductVariant::generateUniqueSku($product->sku, $request->option_values);
-            }
-
-            $optionValues = json_decode($request->option_values, true);
-            if (!is_array($optionValues)) {
-                throw new \Exception('Valores das opções devem ser um JSON válido.');
+            // Processar opções da variação
+            $optionValues = [];
+            if ($request->filled('option_names') && $request->filled('option_values')) {
+                $names = $request->option_names;
+                $values = $request->option_values;
+                
+                for ($i = 0; $i < count($names); $i++) {
+                    if (!empty($names[$i]) && !empty($values[$i])) {
+                        $optionValues[strtolower($names[$i])] = $values[$i];
+                    }
+                }
             }
 
             $variant = ProductVariant::create([
                 'product_id' => $request->product_id,
                 'name' => $request->name,
-                'sku' => $sku,
-                'barcode' => $request->barcode,
+                'sku' => $request->sku,
                 'option_values' => $optionValues,
                 'price_adjustment' => $request->price_adjustment ?? 0,
-                'cost_adjustment' => $request->cost_adjustment ?? 0,
                 'stock_quantity' => $request->stock_quantity,
-                'min_stock' => $request->min_stock ?? 0,
-                'weight_adjustment' => $request->weight_adjustment ?? 0,
                 'active' => $request->boolean('active', true),
             ]);
 
             DB::commit();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Variação criada com sucesso!',
+                    'variant' => $variant
+                ]);
+            }
 
             return redirect()->route('admin.product-variants.index')
                 ->with('success', 'Variação de produto criada com sucesso!');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao criar variação: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return redirect()->back()
                 ->with('error', 'Erro ao criar variação: ' . $e->getMessage())
                 ->withInput();
@@ -260,9 +278,23 @@ class ProductVariantController extends Controller
         try {
             $productVariant->delete();
             
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Variação excluída com sucesso!'
+                ]);
+            }
+            
             return redirect()->route('admin.product-variants.index')
                 ->with('success', 'Variação de produto excluída com sucesso!');
         } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao excluir variação: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return redirect()->back()
                 ->with('error', 'Erro ao excluir variação: ' . $e->getMessage());
         }

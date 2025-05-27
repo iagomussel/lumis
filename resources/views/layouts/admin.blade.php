@@ -111,13 +111,7 @@
                                 </a>
                             </li>
 
-                            <li class="sidebar-item">
-                                <a class="sidebar-link gap-3 py-2.5 my-1 text-base flex items-center relative rounded-md text-gray-500 w-full {{ request()->routeIs('admin.product-variant-options.*') ? 'active' : '' }}"
-                                   href="{{ route('admin.product-variant-options.index') }}">
-                                    <i class="ti ti-adjustments ps-2 text-2xl"></i> 
-                                    <span>Opções de Variações</span>
-                                </a>
-                            </li>
+
 
 
 
@@ -275,9 +269,48 @@
                                 <div>
                                     <h1 class="text-xl font-semibold text-gray-500">@yield('title', 'Dashboard')</h1>
                                 </div>
-                                <div class="flex items-center space-x-3">
+                                <div class="flex items-center space-x-4">
+                                    <!-- Global Search Box -->
+                                    <div class="relative hidden md:block">
+                                        <form action="{{ route('admin.search') }}" method="GET" class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="ti ti-search text-gray-400"></i>
+                                            </div>
+                                            <input 
+                                                type="text" 
+                                                name="q" 
+                                                placeholder="Buscar produtos, clientes, pedidos..."
+                                                value="{{ request('q') }}"
+                                                class="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                                autocomplete="off"
+                                            >
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Mobile Search Button -->
+                                    <button id="mobile-search-toggle" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <i class="ti ti-search text-gray-600"></i>
+                                    </button>
+                                    
                                     @yield('header-actions')
                                 </div>
+                            </div>
+                            
+                            <!-- Mobile Search Bar (Hidden by default) -->
+                            <div id="mobile-search-bar" class="md:hidden mt-4 hidden">
+                                <form action="{{ route('admin.search') }}" method="GET" class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="ti ti-search text-gray-400"></i>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        name="q" 
+                                        placeholder="Buscar produtos, clientes, pedidos..."
+                                        value="{{ request('q') }}"
+                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                        autocomplete="off"
+                                    >
+                                </form>
                             </div>
                         </header>
 
@@ -597,6 +630,25 @@
             
             // Handle window resize
             window.addEventListener('resize', handleResize);
+            
+            // Mobile search toggle
+            const mobileSearchToggle = document.getElementById('mobile-search-toggle');
+            const mobileSearchBar = document.getElementById('mobile-search-bar');
+            
+            if (mobileSearchToggle && mobileSearchBar) {
+                mobileSearchToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    mobileSearchBar.classList.toggle('hidden');
+                    
+                    // Focus on search input when opened
+                    if (!mobileSearchBar.classList.contains('hidden')) {
+                        const searchInput = mobileSearchBar.querySelector('input[type="text"]');
+                        if (searchInput) {
+                            setTimeout(() => searchInput.focus(), 100);
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>
